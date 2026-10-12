@@ -77,6 +77,7 @@ export function totaux(lignes: { quantite: number; prix_unitaire_ht: number; tau
 }
 
 export function messageErreur(e: unknown) {
-  if (e && typeof e === "object" && "message" in e) return String((e as { message: unknown }).message);
+  if (e && typeof e === "object" && "message" in e)
+    return String((e as { message: unknown }).message);
   return "Une erreur est survenue. Réessayez.";
 }

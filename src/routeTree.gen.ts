@@ -12,7 +12,9 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SplatRouteImport } from './routes/$'
 import { Route as BureauRouteImport } from './routes/bureau'
+import { Route as InscriptionRouteImport } from './routes/inscription'
 import { Route as JourneeRouteImport } from './routes/journee'
+import { Route as FicheInscriptionIdRouteImport } from './routes/fiche.$inscriptionId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -29,9 +31,19 @@ const BureauRoute = BureauRouteImport.update({
   path: '/bureau',
   getParentRoute: () => rootRouteImport,
 } as any)
+const InscriptionRoute = InscriptionRouteImport.update({
+  id: '/inscription',
+  path: '/inscription',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const JourneeRoute = JourneeRouteImport.update({
   id: '/journee',
   path: '/journee',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FicheInscriptionIdRoute = FicheInscriptionIdRouteImport.update({
+  id: '/fiche/$inscriptionId',
+  path: '/fiche/$inscriptionId',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -39,34 +51,61 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/$': typeof SplatRoute
   '/bureau': typeof BureauRoute
+  '/inscription': typeof InscriptionRoute
   '/journee': typeof JourneeRoute
+  '/fiche/$inscriptionId': typeof FicheInscriptionIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/$': typeof SplatRoute
   '/bureau': typeof BureauRoute
+  '/inscription': typeof InscriptionRoute
   '/journee': typeof JourneeRoute
+  '/fiche/$inscriptionId': typeof FicheInscriptionIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/$': typeof SplatRoute
   '/bureau': typeof BureauRoute
+  '/inscription': typeof InscriptionRoute
   '/journee': typeof JourneeRoute
+  '/fiche/$inscriptionId': typeof FicheInscriptionIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/$' | '/bureau' | '/journee'
+  fullPaths:
+    | '/'
+    | '/$'
+    | '/bureau'
+    | '/inscription'
+    | '/journee'
+    | '/fiche/$inscriptionId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/$' | '/bureau' | '/journee'
-  id: '__root__' | '/' | '/$' | '/bureau' | '/journee'
+  to:
+    | '/'
+    | '/$'
+    | '/bureau'
+    | '/inscription'
+    | '/journee'
+    | '/fiche/$inscriptionId'
+  id:
+    | '__root__'
+    | '/'
+    | '/$'
+    | '/bureau'
+    | '/inscription'
+    | '/journee'
+    | '/fiche/$inscriptionId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   SplatRoute: typeof SplatRoute
   BureauRoute: typeof BureauRoute
+  InscriptionRoute: typeof InscriptionRoute
   JourneeRoute: typeof JourneeRoute
+  FicheInscriptionIdRoute: typeof FicheInscriptionIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -92,11 +131,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BureauRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/inscription': {
+      id: '/inscription'
+      path: '/inscription'
+      fullPath: '/inscription'
+      preLoaderRoute: typeof InscriptionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/journee': {
       id: '/journee'
       path: '/journee'
       fullPath: '/journee'
       preLoaderRoute: typeof JourneeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/fiche/$inscriptionId': {
+      id: '/fiche/$inscriptionId'
+      path: '/fiche/$inscriptionId'
+      fullPath: '/fiche/$inscriptionId'
+      preLoaderRoute: typeof FicheInscriptionIdRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -106,7 +159,9 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   SplatRoute: SplatRoute,
   BureauRoute: BureauRoute,
+  InscriptionRoute: InscriptionRoute,
   JourneeRoute: JourneeRoute,
+  FicheInscriptionIdRoute: FicheInscriptionIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
