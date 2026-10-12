@@ -1,6 +1,6 @@
 export function dateLongue(iso: string | null | undefined) {
   if (!iso) return "";
-  const [y, m, d] = iso.slice(0, 10).split("-").map(Number);
+  const [y = 1970, m = 1, d = 1] = iso.slice(0, 10).split("-").map(Number);
   return new Date(y, m - 1, d).toLocaleDateString("fr-FR", {
     weekday: "long",
     day: "numeric",
