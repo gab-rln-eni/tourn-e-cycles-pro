@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Check, Minus, Plus, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { prevenirN8n } from "@/lib/declencher";
 import { requireRoles } from "@/lib/auth";
 import { GROUPES } from "@/lib/referentiel";
 import { ETATS, PARTIE_LABEL, TYPE_VELO, dateLongue, euros, messageErreur } from "@/lib/format";
@@ -193,19 +194,17 @@ function Organes({
     const neutre = v.etat === "bon" && v.constats.length === 0 && !v.remarque.trim();
     const res = neutre
       ? await supabase.from("fiche_points").delete().match({ fiche_id: ficheId, groupe, point })
-      : await supabase
-          .from("fiche_points")
-          .upsert(
-            {
-              fiche_id: ficheId,
-              groupe,
-              point,
-              etat: v.etat,
-              constats: v.constats,
-              remarque: v.remarque.trim() || null,
-            },
-            { onConflict: "fiche_id,groupe,point" },
-          );
+      : await supabase.from("fiche_points").upsert(
+          {
+            fiche_id: ficheId,
+            groupe,
+            point,
+            etat: v.etat,
+            constats: v.constats,
+            remarque: v.remarque.trim() || null,
+          },
+          { onConflict: "fiche_id,groupe,point" },
+        );
     if (res.error) {
       toast.error(`Non enregistré : ${messageErreur(res.error)}`);
       onChange();
@@ -580,6 +579,7 @@ function Terminer({ ficheId, onDone }: { ficheId: string; onDone: () => void }) 
       if (error) throw error;
     },
     onSuccess: () => {
+      prevenirN8n();
       toast.success("Fiche terminée. La facture est à préparer au bureau.");
       onDone();
     },

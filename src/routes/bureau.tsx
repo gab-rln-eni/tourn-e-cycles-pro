@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { AlertTriangle, CheckCircle2, Plus, Trash2, XCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { prevenirN8n } from "@/lib/declencher";
 import { requireRoles, useAuth } from "@/lib/auth";
 import {
   ETAT_LABEL,
@@ -261,6 +262,7 @@ function DetailFacture({ id, onRetour }: { id: string; onRetour: () => void }) {
       if (error) throw error;
     },
     onSuccess: () => {
+      prevenirN8n();
       toast.success("Facture validée. L'envoi est lancé.");
       setConfirmer(false);
       recharger();
@@ -433,14 +435,10 @@ function DetailFacture({ id, onRetour }: { id: string; onRetour: () => void }) {
           className="w-full"
           onClick={() =>
             exec(
-              supabase
-                .from("factures")
-                .update({
-                  statut: "a_valider",
-                  prete_par: auth?.user?.id ?? null,
-                  prete_le: new Date().toISOString(),
-                })
-                .eq("id", id),
+              supabase.rpc("preparer_facture", { p_facture: id }).then((r) => {
+                if (!r.error) prevenirN8n();
+                return r;
+              }),
             )
           }
         >

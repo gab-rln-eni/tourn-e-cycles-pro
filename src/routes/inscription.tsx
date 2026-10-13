@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { prevenirN8n } from "@/lib/declencher";
 import { PARTIES, dateLongue, messageErreur } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -203,8 +204,10 @@ function Inscription() {
     });
     setEnvoi(false);
     if (error) setErreurServeur(messageErreur(error));
-    else
+    else {
+      prevenirN8n();
       setFait(data as unknown as { entreprise: string; site: string; date_intervention: string });
+    }
   }
 
   const champ = (

@@ -87,6 +87,7 @@ export type Database = {
           objet_id: string
           statut: string
           tentatives: number
+          pris_le: string | null
           termine_le: string | null
           type: string
         }
@@ -512,6 +513,10 @@ export type Database = {
         Args: never
         Returns: Database["public"]["Enums"]["app_role"][]
       }
+      preparer_facture: { Args: { p_facture: string }; Returns: undefined }
+      reserver_demandes: { Args: { p_limite?: number }; Returns: Json }
+      ecrire_resultat: { Args: { p: Json }; Returns: Json }
+      donnees_demande: { Args: { p_type: string; p_objet: string }; Returns: Json }
       terminer_fiche: { Args: { p_fiche: string }; Returns: string }
       valider_facture: { Args: { p_facture: string }; Returns: undefined }
     }

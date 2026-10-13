@@ -15,6 +15,8 @@ import { Route as BureauRouteImport } from './routes/bureau'
 import { Route as InscriptionRouteImport } from './routes/inscription'
 import { Route as JourneeRouteImport } from './routes/journee'
 import { Route as FicheInscriptionIdRouteImport } from './routes/fiche.$inscriptionId'
+import { Route as ApiPublicDemandeResultatRouteImport } from './routes/api/public/demande-resultat'
+import { Route as ApiPublicDemandesATraiterRouteImport } from './routes/api/public/demandes-a-traiter'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -46,6 +48,18 @@ const FicheInscriptionIdRoute = FicheInscriptionIdRouteImport.update({
   path: '/fiche/$inscriptionId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicDemandeResultatRoute =
+  ApiPublicDemandeResultatRouteImport.update({
+    id: '/api/public/demande-resultat',
+    path: '/api/public/demande-resultat',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicDemandesATraiterRoute =
+  ApiPublicDemandesATraiterRouteImport.update({
+    id: '/api/public/demandes-a-traiter',
+    path: '/api/public/demandes-a-traiter',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -54,6 +68,8 @@ export interface FileRoutesByFullPath {
   '/inscription': typeof InscriptionRoute
   '/journee': typeof JourneeRoute
   '/fiche/$inscriptionId': typeof FicheInscriptionIdRoute
+  '/api/public/demande-resultat': typeof ApiPublicDemandeResultatRoute
+  '/api/public/demandes-a-traiter': typeof ApiPublicDemandesATraiterRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -62,6 +78,8 @@ export interface FileRoutesByTo {
   '/inscription': typeof InscriptionRoute
   '/journee': typeof JourneeRoute
   '/fiche/$inscriptionId': typeof FicheInscriptionIdRoute
+  '/api/public/demande-resultat': typeof ApiPublicDemandeResultatRoute
+  '/api/public/demandes-a-traiter': typeof ApiPublicDemandesATraiterRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -71,6 +89,8 @@ export interface FileRoutesById {
   '/inscription': typeof InscriptionRoute
   '/journee': typeof JourneeRoute
   '/fiche/$inscriptionId': typeof FicheInscriptionIdRoute
+  '/api/public/demande-resultat': typeof ApiPublicDemandeResultatRoute
+  '/api/public/demandes-a-traiter': typeof ApiPublicDemandesATraiterRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -81,6 +101,8 @@ export interface FileRouteTypes {
     | '/inscription'
     | '/journee'
     | '/fiche/$inscriptionId'
+    | '/api/public/demande-resultat'
+    | '/api/public/demandes-a-traiter'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -89,6 +111,8 @@ export interface FileRouteTypes {
     | '/inscription'
     | '/journee'
     | '/fiche/$inscriptionId'
+    | '/api/public/demande-resultat'
+    | '/api/public/demandes-a-traiter'
   id:
     | '__root__'
     | '/'
@@ -97,6 +121,8 @@ export interface FileRouteTypes {
     | '/inscription'
     | '/journee'
     | '/fiche/$inscriptionId'
+    | '/api/public/demande-resultat'
+    | '/api/public/demandes-a-traiter'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -106,6 +132,8 @@ export interface RootRouteChildren {
   InscriptionRoute: typeof InscriptionRoute
   JourneeRoute: typeof JourneeRoute
   FicheInscriptionIdRoute: typeof FicheInscriptionIdRoute
+  ApiPublicDemandeResultatRoute: typeof ApiPublicDemandeResultatRoute
+  ApiPublicDemandesATraiterRoute: typeof ApiPublicDemandesATraiterRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -152,6 +180,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FicheInscriptionIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/demande-resultat': {
+      id: '/api/public/demande-resultat'
+      path: '/api/public/demande-resultat'
+      fullPath: '/api/public/demande-resultat'
+      preLoaderRoute: typeof ApiPublicDemandeResultatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/demandes-a-traiter': {
+      id: '/api/public/demandes-a-traiter'
+      path: '/api/public/demandes-a-traiter'
+      fullPath: '/api/public/demandes-a-traiter'
+      preLoaderRoute: typeof ApiPublicDemandesATraiterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -162,6 +204,8 @@ const rootRouteChildren: RootRouteChildren = {
   InscriptionRoute: InscriptionRoute,
   JourneeRoute: JourneeRoute,
   FicheInscriptionIdRoute: FicheInscriptionIdRoute,
+  ApiPublicDemandeResultatRoute: ApiPublicDemandeResultatRoute,
+  ApiPublicDemandesATraiterRoute: ApiPublicDemandesATraiterRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
