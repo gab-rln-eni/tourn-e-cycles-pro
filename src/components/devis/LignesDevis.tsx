@@ -1,0 +1,258 @@
+import { useState } from "react";
+import { toast } from "sonner";
+import { AlertTriangle, CheckCircle2, Minus, Plus, Trash2, XCircle } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { euros, messageErreur, totaux } from "@/lib/format";
+import type { Avis } from "@/lib/devis";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+
+export type LigneDevis = {
+  id: string;
+  piece_id: string | null;
+  libelle: string;
+  quantite: number;
+  prix_unitaire_ht: number;
+  taux_tva: number;
+  ordre: number;
+};
+export type PieceCatalogue = {
+  id: string;
+  reference: string;
+  libelle: string;
+  prix_vente_ht: number;
+  taux_tva?: number;
+};
+
+/** Lignes conseillées d'un devis : quantité, prix, retrait, ajout depuis le catalogue ou en ligne libre. */
+export function LignesDevis({
+  devisId,
+  lignes,
+  catalogue,
+  lectureSeule,
+  onChange,
+}: {
+  devisId: string;
+  lignes: LigneDevis[];
+  catalogue: PieceCatalogue[];
+  lectureSeule: boolean;
+  onChange: () => void;
+}) {
+  const [recherche, setRecherche] = useState("");
+  const [libre, setLibre] = useState("");
+  const trouvees = recherche.trim()
+    ? catalogue.filter((c) =>
+        `${c.reference} ${c.libelle}`.toLowerCase().includes(recherche.trim().toLowerCase()),
+      )
+    : [];
+  const ordreSuivant = lignes.reduce((m, l) => Math.max(m, l.ordre), 0) + 1;
+
+  async function exec(p: PromiseLike<{ error: unknown }>) {
+    const { error } = await p;
+    if (error) toast.error(`Non enregistré : ${messageErreur(error)}`);
+    onChange();
+  }
+  const t = totaux(lignes);
+
+  return (
+    <div className="space-y-3">
+      {lignes.length === 0 && <p>Aucune réparation conseillée pour l'instant.</p>}
+      <ul className="space-y-3">
+        {lignes.map((l) => (
+          <li key={l.id} className="rounded-lg border-2 p-3">
+            <p className="font-bold">{l.libelle}</p>
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <Button
+                size="icon"
+                variant="outline"
+                aria-label={`Retirer une unité de ${l.libelle}`}
+                disabled={lectureSeule || Number(l.quantite) <= 1}
+                onClick={() =>
+                  exec(
+                    supabase
+                      .from("devis_lignes")
+                      .update({ quantite: Number(l.quantite) - 1 })
+                      .eq("id", l.id),
+                  )
+                }
+              >
+                <Minus aria-hidden />
+              </Button>
+              <span className="min-w-10 text-center text-lg font-bold" aria-label="Quantité">
+                {Number(l.quantite)}
+              </span>
+              <Button
+                size="icon"
+                variant="outline"
+                aria-label={`Ajouter une unité de ${l.libelle}`}
+                disabled={lectureSeule}
+                onClick={() =>
+                  exec(
+                    supabase
+                      .from("devis_lignes")
+                      .update({ quantite: Number(l.quantite) + 1 })
+                      .eq("id", l.id),
+                  )
+                }
+              >
+                <Plus aria-hidden />
+              </Button>
+              <Label htmlFor={`devis-prix-${l.id}`} className="ml-2">
+                Prix HT
+              </Label>
+              <Input
+                id={`devis-prix-${l.id}`}
+                type="number"
+                inputMode="decimal"
+                step="0.01"
+                min="0"
+                className="h-12 w-28"
+                disabled={lectureSeule}
+                defaultValue={Number(l.prix_unitaire_ht)}
+                onBlur={(e) => {
+                  const v = Number(e.target.value);
+                  if (!Number.isNaN(v) && v >= 0 && v !== Number(l.prix_unitaire_ht))
+                    exec(
+                      supabase.from("devis_lignes").update({ prix_unitaire_ht: v }).eq("id", l.id),
+                    );
+                }}
+              />
+              {!lectureSeule && (
+                <Button
+                  variant="ghost"
+                  aria-label={`Supprimer ${l.libelle}`}
+                  onClick={() => exec(supabase.from("devis_lignes").delete().eq("id", l.id))}
+                >
+                  <Trash2 aria-hidden /> Retirer
+                </Button>
+              )}
+            </div>
+          </li>
+        ))}
+      </ul>
+      <p className="font-bold">
+        Total : {euros(t.ht)} HT, {euros(t.ttc)} TTC
+      </p>
+
+      {!lectureSeule && (
+        <div className="space-y-3 border-t pt-3">
+          <Label htmlFor={`devis-recherche-${devisId}`}>
+            Ajouter une pièce du catalogue (référence ou libellé)
+          </Label>
+          <Input
+            id={`devis-recherche-${devisId}`}
+            className="h-12"
+            value={recherche}
+            onChange={(e) => setRecherche(e.target.value)}
+            autoComplete="off"
+          />
+          {trouvees.length > 0 && (
+            <ul className="space-y-2">
+              {trouvees.slice(0, 8).map((c) => (
+                <li key={c.id}>
+                  <Button
+                    variant="outline"
+                    className="w-full justify-between"
+                    onClick={() => {
+                      setRecherche("");
+                      exec(
+                        supabase.from("devis_lignes").insert({
+                          devis_id: devisId,
+                          piece_id: c.id,
+                          libelle: c.libelle,
+                          quantite: 1,
+                          prix_unitaire_ht: Number(c.prix_vente_ht),
+                          taux_tva: Number(c.taux_tva ?? 20),
+                          ordre: ordreSuivant,
+                        }),
+                      );
+                    }}
+                  >
+                    <span>{c.libelle}</span>
+                    <span>{euros(Number(c.prix_vente_ht))}</span>
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          )}
+          {recherche.trim() && trouvees.length === 0 && <p>Aucune pièce trouvée.</p>}
+          <Label htmlFor={`devis-libre-${devisId}`}>Ou une réparation libre</Label>
+          <div className="flex gap-2">
+            <Input
+              id={`devis-libre-${devisId}`}
+              className="h-12"
+              maxLength={200}
+              value={libre}
+              onChange={(e) => setLibre(e.target.value)}
+            />
+            <Button
+              disabled={!libre.trim()}
+              onClick={() => {
+                const l = libre.trim();
+                setLibre("");
+                exec(
+                  supabase.from("devis_lignes").insert({
+                    devis_id: devisId,
+                    libelle: l,
+                    quantite: 1,
+                    prix_unitaire_ht: 0,
+                    ordre: ordreSuivant,
+                  }),
+                );
+              }}
+            >
+              Ajouter
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** Avis des contrôles simples du devis (code classique, aucune IA). */
+export function AvisDevis({ avis, erreur }: { avis: Avis[]; erreur?: string | null }) {
+  return (
+    <section aria-label="Contrôles du devis" className="space-y-2">
+      {erreur && (
+        <p role="alert" className="font-bold text-rose-text">
+          Contrôle impossible : {erreur}
+        </p>
+      )}
+      <ul className="space-y-2">
+        {avis.map((a, i) => (
+          <li
+            key={i}
+            className={
+              "flex items-start gap-3 rounded-lg border-l-8 bg-card p-3 " +
+              (a.niveau === "erreur"
+                ? "border-rose"
+                : a.niveau === "attention"
+                  ? "border-warning"
+                  : "border-success")
+            }
+          >
+            {a.niveau === "erreur" ? (
+              <XCircle aria-hidden className="mt-0.5 shrink-0 text-rose-text" />
+            ) : a.niveau === "attention" ? (
+              <AlertTriangle aria-hidden className="mt-0.5 shrink-0" />
+            ) : (
+              <CheckCircle2 aria-hidden className="mt-0.5 shrink-0 text-primary-text" />
+            )}
+            <span>
+              <strong>
+                {a.niveau === "erreur"
+                  ? "À corriger"
+                  : a.niveau === "attention"
+                    ? "Attention"
+                    : "Correct"}
+              </strong>{" "}
+              : {a.message}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}

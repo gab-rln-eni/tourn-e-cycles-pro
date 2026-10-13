@@ -14,6 +14,7 @@ import { Route as SplatRouteImport } from './routes/$'
 import { Route as BureauRouteImport } from './routes/bureau'
 import { Route as InscriptionRouteImport } from './routes/inscription'
 import { Route as JourneeRouteImport } from './routes/journee'
+import { Route as DevisJetonRouteImport } from './routes/devis.$jeton'
 import { Route as FicheInscriptionIdRouteImport } from './routes/fiche.$inscriptionId'
 import { Route as ApiPublicDemandeResultatRouteImport } from './routes/api/public/demande-resultat'
 import { Route as ApiPublicDemandesATraiterRouteImport } from './routes/api/public/demandes-a-traiter'
@@ -43,6 +44,11 @@ const JourneeRoute = JourneeRouteImport.update({
   path: '/journee',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DevisJetonRoute = DevisJetonRouteImport.update({
+  id: '/devis/$jeton',
+  path: '/devis/$jeton',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const FicheInscriptionIdRoute = FicheInscriptionIdRouteImport.update({
   id: '/fiche/$inscriptionId',
   path: '/fiche/$inscriptionId',
@@ -67,6 +73,7 @@ export interface FileRoutesByFullPath {
   '/bureau': typeof BureauRoute
   '/inscription': typeof InscriptionRoute
   '/journee': typeof JourneeRoute
+  '/devis/$jeton': typeof DevisJetonRoute
   '/fiche/$inscriptionId': typeof FicheInscriptionIdRoute
   '/api/public/demande-resultat': typeof ApiPublicDemandeResultatRoute
   '/api/public/demandes-a-traiter': typeof ApiPublicDemandesATraiterRoute
@@ -77,6 +84,7 @@ export interface FileRoutesByTo {
   '/bureau': typeof BureauRoute
   '/inscription': typeof InscriptionRoute
   '/journee': typeof JourneeRoute
+  '/devis/$jeton': typeof DevisJetonRoute
   '/fiche/$inscriptionId': typeof FicheInscriptionIdRoute
   '/api/public/demande-resultat': typeof ApiPublicDemandeResultatRoute
   '/api/public/demandes-a-traiter': typeof ApiPublicDemandesATraiterRoute
@@ -88,6 +96,7 @@ export interface FileRoutesById {
   '/bureau': typeof BureauRoute
   '/inscription': typeof InscriptionRoute
   '/journee': typeof JourneeRoute
+  '/devis/$jeton': typeof DevisJetonRoute
   '/fiche/$inscriptionId': typeof FicheInscriptionIdRoute
   '/api/public/demande-resultat': typeof ApiPublicDemandeResultatRoute
   '/api/public/demandes-a-traiter': typeof ApiPublicDemandesATraiterRoute
@@ -100,6 +109,7 @@ export interface FileRouteTypes {
     | '/bureau'
     | '/inscription'
     | '/journee'
+    | '/devis/$jeton'
     | '/fiche/$inscriptionId'
     | '/api/public/demande-resultat'
     | '/api/public/demandes-a-traiter'
@@ -110,6 +120,7 @@ export interface FileRouteTypes {
     | '/bureau'
     | '/inscription'
     | '/journee'
+    | '/devis/$jeton'
     | '/fiche/$inscriptionId'
     | '/api/public/demande-resultat'
     | '/api/public/demandes-a-traiter'
@@ -120,6 +131,7 @@ export interface FileRouteTypes {
     | '/bureau'
     | '/inscription'
     | '/journee'
+    | '/devis/$jeton'
     | '/fiche/$inscriptionId'
     | '/api/public/demande-resultat'
     | '/api/public/demandes-a-traiter'
@@ -131,6 +143,7 @@ export interface RootRouteChildren {
   BureauRoute: typeof BureauRoute
   InscriptionRoute: typeof InscriptionRoute
   JourneeRoute: typeof JourneeRoute
+  DevisJetonRoute: typeof DevisJetonRoute
   FicheInscriptionIdRoute: typeof FicheInscriptionIdRoute
   ApiPublicDemandeResultatRoute: typeof ApiPublicDemandeResultatRoute
   ApiPublicDemandesATraiterRoute: typeof ApiPublicDemandesATraiterRoute
@@ -173,6 +186,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof JourneeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/devis/$jeton': {
+      id: '/devis/$jeton'
+      path: '/devis/$jeton'
+      fullPath: '/devis/$jeton'
+      preLoaderRoute: typeof DevisJetonRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/fiche/$inscriptionId': {
       id: '/fiche/$inscriptionId'
       path: '/fiche/$inscriptionId'
@@ -203,6 +223,7 @@ const rootRouteChildren: RootRouteChildren = {
   BureauRoute: BureauRoute,
   InscriptionRoute: InscriptionRoute,
   JourneeRoute: JourneeRoute,
+  DevisJetonRoute: DevisJetonRoute,
   FicheInscriptionIdRoute: FicheInscriptionIdRoute,
   ApiPublicDemandeResultatRoute: ApiPublicDemandeResultatRoute,
   ApiPublicDemandesATraiterRoute: ApiPublicDemandesATraiterRoute,

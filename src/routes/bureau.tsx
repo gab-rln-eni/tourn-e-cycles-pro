@@ -18,6 +18,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { DevisBureau } from "@/components/devis/DevisBureau";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -64,9 +65,12 @@ function Bureau() {
     <div className="space-y-4">
       <h1 className="text-3xl font-bold text-primary">Bureau</h1>
       <Tabs defaultValue="factures">
-        <TabsList className="grid h-auto w-full grid-cols-2">
+        <TabsList className="grid h-auto w-full grid-cols-3">
           <TabsTrigger value="factures" className="min-h-12 text-base font-bold">
             Factures
+          </TabsTrigger>
+          <TabsTrigger value="devis" className="min-h-12 text-base font-bold">
+            Devis
           </TabsTrigger>
           <TabsTrigger value="tableau" className="min-h-12 text-base font-bold">
             Tableau de bord
@@ -78,6 +82,9 @@ function Bureau() {
           ) : (
             <ListeFactures onOuvrir={setOuverte} />
           )}
+        </TabsContent>
+        <TabsContent value="devis" className="mt-4">
+          <DevisBureau />
         </TabsContent>
         <TabsContent value="tableau" className="mt-4">
           <TableauDeBord />

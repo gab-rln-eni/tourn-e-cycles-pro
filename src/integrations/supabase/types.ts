@@ -113,6 +113,101 @@ export type Database = {
         }
         Relationships: []
       }
+      devis: {
+        Row: {
+          axonaut_client_id: string | null
+          axonaut_decision_le: string | null
+          axonaut_devis_id: string | null
+          axonaut_lien: string | null
+          axonaut_numero: string | null
+          commentaire: string | null
+          created_at: string
+          cree_par: string | null
+          decide_le: string | null
+          derniere_erreur: string | null
+          envoye_le: string | null
+          fiche_id: string | null
+          id: string
+          jeton: string | null
+          propose_le: string | null
+          reference: string
+          relu_le: string | null
+          relu_par: string | null
+          statut: string
+          updated_at: string
+        }
+        Insert: {
+          axonaut_client_id?: string | null
+          commentaire?: string | null
+          cree_par?: string | null
+          fiche_id?: string | null
+          id?: string
+          reference?: string
+          statut?: string
+        }
+        Update: {
+          axonaut_client_id?: string | null
+          commentaire?: string | null
+          statut?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "devis_fiche_id_fkey"
+            columns: ["fiche_id"]
+            isOneToOne: false
+            referencedRelation: "fiches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      devis_lignes: {
+        Row: {
+          created_at: string
+          devis_id: string
+          id: string
+          libelle: string
+          ordre: number
+          piece_id: string | null
+          prix_unitaire_ht: number
+          quantite: number
+          taux_tva: number
+        }
+        Insert: {
+          created_at?: string
+          devis_id: string
+          id?: string
+          libelle: string
+          ordre?: number
+          piece_id?: string | null
+          prix_unitaire_ht?: number
+          quantite?: number
+          taux_tva?: number
+        }
+        Update: {
+          libelle?: string
+          ordre?: number
+          piece_id?: string | null
+          prix_unitaire_ht?: number
+          quantite?: number
+          taux_tva?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "devis_lignes_devis_id_fkey"
+            columns: ["devis_id"]
+            isOneToOne: false
+            referencedRelation: "devis"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "devis_lignes_piece_id_fkey"
+            columns: ["piece_id"]
+            isOneToOne: false
+            referencedRelation: "pieces_catalogue"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       entreprises: {
         Row: {
           axonaut_client_id: string | null
@@ -519,6 +614,13 @@ export type Database = {
       donnees_demande: { Args: { p_type: string; p_objet: string }; Returns: Json }
       terminer_fiche: { Args: { p_fiche: string }; Returns: string }
       valider_facture: { Args: { p_facture: string }; Returns: undefined }
+      devis_controles: { Args: { p_devis: string }; Returns: Json }
+      devis_proposer: { Args: { p_devis: string }; Returns: undefined }
+      devis_preparer_envoi: { Args: { p_devis: string }; Returns: Json }
+      devis_noter_envoi: { Args: { p: Json }; Returns: Json }
+      devis_public: { Args: { p_jeton: string }; Returns: Json }
+      devis_repondre: { Args: { p_jeton: string; p_decision: string }; Returns: Json }
+      devis_noter_decision: { Args: { p: Json }; Returns: Json }
     }
     Enums: {
       app_role: "dirigeant" | "mecanicien" | "atelier"
