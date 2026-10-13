@@ -75,7 +75,9 @@ begin
       'total_tva', t.tva,
       'total_ttc', t.ht + t.tva,
       'recapitulatif', jsonb_build_object('client', i.prenom || ' ' || i.nom, 'entreprise', e.nom, 'site', ev.site,
-                                          'date_intervention', ev.date_intervention, 'reference_fiche', fi.reference))
+                                          'date_intervention', ev.date_intervention, 'reference_fiche', fi.reference,
+                                          'velo', case i.type_velo when 'vae' then 'Électrique (VAE)' else 'Musculaire' end
+                                                  || coalesce(', ' || nullif(btrim(i.velo_modele), ''), '')))
     into v
     from public.factures fa
     join public.inscriptions i on i.id = fa.inscription_id

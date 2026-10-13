@@ -103,6 +103,7 @@ do $$ declare c jsonb; e jsonb; k jsonb; v jsonb; begin
   assert e->>'reference_fiche' = (select reference from public.fiches), 'envoi : référence';
   assert (e->>'total_ht')::numeric = 52.08 and (e->>'total_tva')::numeric = 10.42 and (e->>'total_ttc')::numeric = 62.50, 'envoi : totaux';
   assert jsonb_array_length(e->'lignes') = 2, 'envoi : lignes';
+  assert e->'recapitulatif'->>'velo' = 'Électrique (VAE)', 'envoi : velo sans modèle (velo_modele vide)';
 end $$;
 
 -- 8. Sortie vide : plus rien à réserver.
@@ -188,5 +189,18 @@ do $$ begin
   assert (select statut from public.factures) = 'envoyee', 'facture envoyée';
   assert (select envoyee_le from public.factures) = '2026-10-13 08:00:00+00', 'date d''envoi reprise du résultat';
 end $$;
+
+-- 15. recapitulatif.velo avec modèle renseigné, puis modèle fait d'espaces (traité comme vide).
+update public.factures set statut = 'validee'; -- les données 'envoi' ne sont fournies que pour une facture validée
+update public.inscriptions set velo_modele = 'Decathlon Elops 120';
+set role service_role;
+select public.donnees_demande('envoi', :'fac_id')->'recapitulatif'->>'velo' as velo1 \gset
+reset role;
+update public.inscriptions set velo_modele = '   ';
+set role service_role;
+select public.donnees_demande('envoi', :'fac_id')->'recapitulatif'->>'velo' as velo2 \gset
+reset role;
+select pg_temp.verifier(:'velo1' = 'Électrique (VAE), Decathlon Elops 120', 'velo avec modèle');
+select pg_temp.verifier(:'velo2' = 'Électrique (VAE)', 'velo modèle blanc');
 
 \echo BANC LIAISON : TOUTES LES ASSERTIONS PASSENT
