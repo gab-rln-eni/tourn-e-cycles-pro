@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { dateHeure, euros, messageErreur, totaux } from "@/lib/format";
-import { STATUT_DEVIS, envoyerDevis, lireAvis } from "@/lib/devis";
+import { STATUT_DEVIS, envoyerDevis, lireAvis, relancerReport } from "@/lib/devis";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -131,6 +131,31 @@ function DetailDevis({ id, onRetour }: { id: string; onRetour: () => void }) {
     qc.invalidateQueries({ queryKey: cle });
     qc.invalidateQueries({ queryKey: ["devis-liste"] });
   };
+  const reprendre = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.rpc("devis_reprendre", { p_devis: id });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Devis repris en brouillon : il peut être corrigé puis renvoyé.");
+      recharger();
+    },
+    onError: (e) => toast.error(messageErreur(e)),
+  });
+  const report = useMutation({
+    mutationFn: async () => {
+      const r = await relancerReport(id);
+      if (!r.ok) throw new Error(r.erreur || "Report impossible.");
+    },
+    onSuccess: () => {
+      toast.success("Décision du client reportée dans Axonaut.");
+      recharger();
+    },
+    onError: (e) => {
+      toast.error(messageErreur(e));
+      recharger();
+    },
+  });
   const envoi = useMutation({
     mutationFn: async () => {
       const r = await envoyerDevis(id);
@@ -203,6 +228,28 @@ function DetailDevis({ id, onRetour }: { id: string; onRetour: () => void }) {
             {envoi.isPending ? "Envoi en cours" : "Valider et envoyer au client"}
           </Button>
         </>
+      )}
+
+      {d.statut === "a_relire" && !!d.jeton && !!d.derniere_erreur && (
+        <Button
+          variant="outline"
+          className="w-full"
+          disabled={reprendre.isPending}
+          onClick={() => reprendre.mutate()}
+        >
+          Reprendre en brouillon pour corriger
+        </Button>
+      )}
+
+      {(d.statut === "accepte" || d.statut === "refuse") && !d.axonaut_decision_le && (
+        <section className="space-y-2 rounded-xl bg-card p-4 shadow-sm">
+          <p className="font-bold text-rose-text">
+            La réponse du client n'est pas encore reportée dans Axonaut.
+          </p>
+          <Button className="w-full" disabled={report.isPending} onClick={() => report.mutate()}>
+            Reporter dans Axonaut
+          </Button>
+        </section>
       )}
 
       {lien && d.statut !== "a_relire" && (

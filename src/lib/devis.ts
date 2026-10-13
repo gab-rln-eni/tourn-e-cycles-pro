@@ -38,6 +38,28 @@ export const repondreDevisServeur = createServerFn({ method: "POST" })
     return repondreDevis(data.jeton, data.decision);
   });
 
+/** Rattrapage : reporter dans Axonaut une décision du client restée non reportée. */
+export const relancerReportServeur = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => ({ devisId: texte((d as { devisId?: unknown })?.devisId, 36) }))
+  .handler(async ({ data, context }) => {
+    const { relancerReport } = await import("@/lib/devis.server");
+    return relancerReport(context.supabase, data.devisId);
+  });
+
+/** En-tête de session pour les fonctions serveur protégées (la base vérifie le rôle). */
+async function enteteSession(): Promise<Record<string, string> | null> {
+  const { data } = await supabase.auth.getSession();
+  const jeton = data.session?.access_token;
+  return jeton ? { Authorization: `Bearer ${jeton}` } : null;
+}
+
+export async function relancerReport(devisId: string) {
+  const headers = await enteteSession();
+  if (!headers) return { ok: false, erreur: "Session expirée : reconnectez-vous." };
+  return relancerReportServeur({ data: { devisId }, headers });
+}
+
 /** Appel côté écran de la relecture : transmet le jeton de session pour que la base vérifie le rôle. */
 export async function envoyerDevis(devisId: string) {
   const { data } = await supabase.auth.getSession();

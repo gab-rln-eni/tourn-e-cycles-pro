@@ -39,7 +39,10 @@ select pg_temp.verifier(pg_temp.refuse(format('select public.devis_proposer(%L)'
 
 -- 3. Le mécanicien propose ; il ne peut pas relire lui-même.
 select public.devis_proposer(:'dv');
-select pg_temp.verifier(pg_temp.refuse(format('select public.devis_preparer_envoi(%L)', :'dv')), 'mécanicien : relecture refusée');
+select pg_temp.verifier(pg_temp.refuse(format('select public.devis_preparer_envoi2(%L)', :'dv')), 'mécanicien : relecture refusée');
+select pg_temp.verifier(pg_temp.refuse(format($q$update public.devis set statut = 'brouillon' where id = %L$q$, :'dv')), '0004 : statut non modifiable directement');
+select pg_temp.verifier(pg_temp.refuse(format($q$update public.devis set relu_le = now() where id = %L$q$, :'dv')), '0004 : relecture non usurpable');
+select pg_temp.verifier(pg_temp.refuse($q$insert into public.devis(reference, relu_par) values ('BANC-X2', gen_random_uuid())$q$), '0004 : colonnes réservées refusées à l insertion');
 reset role;
 
 -- 4. Anon : aucune lecture des tables, aucune fonction interne ; page publique vide avant l'envoi.
@@ -53,12 +56,20 @@ reset role;
 
 -- 5. L'atelier relit : jeton créé, données d'envoi complètes.
 set role authenticated; set request.jwt.claim.sub = '00000000-0000-0000-0000-00000000000a';
-select public.devis_preparer_envoi(:'dv') as prep \gset
+select public.devis_preparer_envoi2(:'dv') as prep \gset
 select (:'prep'::jsonb)->>'jeton' as jeton \gset
 select pg_temp.verifier((:'prep'::jsonb)->>'ok' = 'true' and :'jeton' ~ '^[0-9a-f]{64}$', 'relecture : ok et jeton');
 select pg_temp.verifier((:'prep'::jsonb)#>>'{donnees,axonaut_client_id}' = '52135944' and jsonb_array_length((:'prep'::jsonb)#>'{donnees,lignes}') = 2
   and ((:'prep'::jsonb)#>>'{donnees,total_ttc}')::numeric = 90, 'données d envoi');
-select pg_temp.verifier(public.devis_preparer_envoi(:'dv')->>'jeton' = :'jeton', 'reprise : même jeton');
+select pg_temp.verifier(public.devis_preparer_envoi2(:'dv')->>'ok' = 'false' and public.devis_preparer_envoi2(:'dv')::text like '%déjà en cours%', '0004 : second envoi refusé pendant la garde');
+select pg_temp.verifier(pg_temp.refuse(format('select public.devis_preparer_envoi(%L)', :'dv')), '0004 : relecture v1 fermée');
+select pg_temp.verifier(pg_temp.refuse(format('select public.devis_reprendre(%L)', :'dv')), '0004 : reprise refusée pendant la garde');
+reset role;
+set role authenticated; set request.jwt.claim.sub = '00000000-0000-0000-0000-00000000000e';
+update public.devis_lignes set prix_unitaire_ht = 999 where devis_id = :'dv';
+reset role;
+select pg_temp.verifier((select max(prix_unitaire_ht) from public.devis_lignes where devis_id = :'dv') = 50, '0004 : lignes figées après la pose du jeton');
+set role authenticated; set request.jwt.claim.sub = '00000000-0000-0000-0000-00000000000a';
 reset role;
 set role anon;
 select pg_temp.verifier(public.devis_public(:'jeton') is null, 'page publique vide tant que le devis n est pas envoyé');
@@ -79,14 +90,37 @@ select public.devis_public(:'jeton') as pub \gset
 select pg_temp.verifier((:'pub'::jsonb)->>'reference' = 'BANC-DEVIS-1' and ((:'pub'::jsonb)->>'total_ttc')::numeric = 90, 'page publique : référence et total');
 select pg_temp.verifier(:'pub' not like '%@%' and :'pub' not like '%Alex%' and :'pub' not like '%52135944%', 'page publique : aucune donnée personnelle ni identifiant client');
 select pg_temp.verifier(public.devis_public(repeat('0', 64)) is null and public.devis_public('x') is null, 'jeton faux : rien');
-select pg_temp.verifier(public.devis_repondre(repeat('0', 64), 'accepte')->>'ok' = 'false', 'jeton faux : refus');
-select pg_temp.verifier(public.devis_repondre(:'jeton', 'peut-etre')->>'ok' = 'false', 'décision inconnue : refus');
-select public.devis_repondre(:'jeton', 'accepte') as rep \gset
-select pg_temp.verifier((:'rep'::jsonb)->>'ok' = 'true' and (:'rep'::jsonb)->>'axonaut_devis_id' = '999', 'acceptation');
-select pg_temp.verifier(public.devis_repondre(:'jeton', 'refuse')->>'ok' = 'false', 'seconde décision contraire refusée');
-select pg_temp.verifier(public.devis_repondre(:'jeton', 'accepte')->>'deja' = 'true', 'seconde décision identique : déjà');
+select pg_temp.verifier(public.devis_repondre2(repeat('0', 64), 'accepte')->>'ok' = 'false', 'jeton faux : refus');
+select pg_temp.verifier(public.devis_repondre2(:'jeton', 'peut-etre')->>'ok' = 'false', 'décision inconnue : refus');
+select public.devis_repondre2(:'jeton', 'accepte') as rep \gset
+select pg_temp.verifier((:'rep'::jsonb)->>'ok' = 'true' and not ((:'rep'::jsonb) ? 'axonaut_devis_id') and not ((:'rep'::jsonb) ? 'devis_id'), 'acceptation, réponse minimale à anon');
+select pg_temp.verifier(pg_temp.refuse(format('select public.devis_repondre(%L, %L)', :'jeton', 'accepte')), '0004 : devis_repondre v1 fermée à anon');
+select pg_temp.verifier(public.devis_repondre2(:'jeton', 'refuse')->>'ok' = 'false', 'seconde décision contraire refusée');
+select pg_temp.verifier(public.devis_repondre2(:'jeton', 'accepte')->>'deja' = 'true', 'seconde décision identique : déjà');
 reset role;
 select pg_temp.verifier((select statut from public.devis where id = :'dv') = 'accepte', 'statut accepte');
+
+-- 7 bis. Envoi en échec : reprise en brouillon après la garde (0004)
+set role authenticated; set request.jwt.claim.sub = '00000000-0000-0000-0000-00000000000e';
+insert into public.devis(reference, axonaut_client_id) values ('BANC-DEVIS-2', '52135944');
+reset role;
+select id as dv2 from public.devis where reference = 'BANC-DEVIS-2' \gset
+set role authenticated; set request.jwt.claim.sub = '00000000-0000-0000-0000-00000000000e';
+insert into public.devis_lignes(devis_id, libelle, quantite, prix_unitaire_ht) values (:'dv2', 'Pneu', 1, 20);
+select public.devis_proposer(:'dv2');
+reset role;
+set role authenticated; set request.jwt.claim.sub = '00000000-0000-0000-0000-00000000000a';
+select (public.devis_preparer_envoi2(:'dv2'))->>'ok' as ok2 \gset
+reset role;
+set role service_role;
+select public.devis_noter_envoi(jsonb_build_object('devis_id', :'dv2', 'ok', false, 'erreur', 'Axonaut a refusé'));
+reset role;
+update public.devis set envoi_demande_le = now() - interval '3 minutes' where id = :'dv2';
+set role authenticated; set request.jwt.claim.sub = '00000000-0000-0000-0000-00000000000a';
+select public.devis_reprendre(:'dv2');
+reset role;
+select pg_temp.verifier((select statut = 'brouillon' and jeton is null and derniere_erreur = 'Axonaut a refusé' from public.devis where id = :'dv2'), '0004 : reprise en brouillon après échec, jeton retiré');
+select pg_temp.verifier(:'ok2' = 'true', '0004 : relecture v2 nominale');
 
 -- 8. Compte confirmé sans accès : aucune ligne visible.
 insert into auth.users values ('00000000-0000-0000-0000-0000000000ff', 'inconnu@example.com', now());

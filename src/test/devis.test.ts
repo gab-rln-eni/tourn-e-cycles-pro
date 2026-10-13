@@ -7,6 +7,7 @@ import {
   jetonValide,
   lienReponse,
   lireReponseN8n,
+  uuidValide,
 } from "@/lib/devis.server";
 import { lireAvis } from "@/lib/devis";
 
@@ -19,6 +20,11 @@ describe("parcours devis : jeton, décision, lien", () => {
     expect(jetonValide("a".repeat(63))).toBe(false);
     expect(jetonValide("")).toBe(false);
     expect(jetonValide(undefined)).toBe(false);
+  });
+  it("refuse un identifiant de devis qui n'est pas un UUID", () => {
+    expect(uuidValide("db11b3fb-6a90-4648-a0b2-acfd09c8c494")).toBe(true);
+    expect(uuidValide("1; drop")).toBe(false);
+    expect(uuidValide("")).toBe(false);
   });
   it("accepte seulement accepte ou refuse", () => {
     expect(decisionValide("accepte")).toBe(true);

@@ -125,6 +125,7 @@ export type Database = {
           cree_par: string | null
           decide_le: string | null
           derniere_erreur: string | null
+          envoi_demande_le: string | null
           envoye_le: string | null
           fiche_id: string | null
           id: string
@@ -621,6 +622,10 @@ export type Database = {
       devis_public: { Args: { p_jeton: string }; Returns: Json }
       devis_repondre: { Args: { p_jeton: string; p_decision: string }; Returns: Json }
       devis_noter_decision: { Args: { p: Json }; Returns: Json }
+      devis_preparer_envoi2: { Args: { p_devis: string }; Returns: Json }
+      devis_reprendre: { Args: { p_devis: string }; Returns: undefined }
+      devis_repondre2: { Args: { p_jeton: string; p_decision: string }; Returns: Json }
+      devis_client_axonaut: { Args: { p_devis: string }; Returns: string }
     }
     Enums: {
       app_role: "dirigeant" | "mecanicien" | "atelier"
