@@ -9,3 +9,5 @@ for f in "$RACINE/tests/sql/bouchon_supabase.sql" "$RACINE"/drizzle/migrations/0
   echo "migration appliquée : $(basename "$f")"
 done
 psql -h "$H" -p "$PORT" -U "$U" -d banc -f "$RACINE/tests/sql/banc_liaison.sql"
+# Parcours devis (migration 0003), sur la même base, après le banc de liaison
+psql -h "$H" -p "$PORT" -U "$U" -d banc -f "$RACINE/tests/sql/banc_devis.sql"
