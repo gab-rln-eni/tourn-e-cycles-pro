@@ -8,6 +8,20 @@
       "when": 1791823280655,
       "tag": "0000_tournee_cycles_schema",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1791847222795,
+      "tag": "0001_liaison_l1_l2_l3",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791850245188,
+      "tag": "0002_liaison_n8n",
+      "breakpoints": true
     }
   ]
 }
