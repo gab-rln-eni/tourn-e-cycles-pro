@@ -49,7 +49,9 @@ insert into public.evenements(id, entreprise_id, site, date_intervention, places
   select x.id, e.id, x.site, x.d, x.pm from (select id from public.entreprises order by created_at limit 1) e,
   (values ('b0000000-0000-0000-0000-000000000016'::uuid, 'Site V4 16', date '2026-10-16', null::int),
           ('b0000000-0000-0000-0000-000000000015'::uuid, 'Site V4 15', date '2026-10-15', null),
-          ('b0000000-0000-0000-0000-0000000000c1'::uuid, 'Site V4 complet', date '2099-12-31', 1)) x(id, site, d, pm);
+          ('b0000000-0000-0000-0000-0000000000c1'::uuid, 'Site V4 complet', date '2099-12-31', 1),
+          ('b0000000-0000-0000-0000-0000000000f1'::uuid, 'Site V4 futur', current_date + 30, null),
+          ('b0000000-0000-0000-0000-0000000000f2'::uuid, 'Site V4 futur 2', current_date + 31, null)) x(id, site, d, pm);
 insert into public.inscriptions(id, evenement_id, nom, prenom, telephone, email, code_postal, type_velo, partie_signalee, consentement_le) values
   ('c0000000-0000-0000-0000-000000000001', 'b0000000-0000-0000-0000-000000000016', 'Normal', 'Un', '0600000000', 'un@example.com', '69007', 'vae', 'freins', now()),
   ('c0000000-0000-0000-0000-000000000002', 'b0000000-0000-0000-0000-000000000016', 'Normal', 'Deux', '0600000000', 'deux@example.com', '69007', 'vae', 'freins', now()),
@@ -203,6 +205,11 @@ set role authenticated; set request.jwt.claim.sub = '00000000-0000-0000-0000-000
 select pg_temp.verifier((public.devis_piece_retirer('01000000-0000-0000-0000-000000000113', false)->>'retiree')::boolean = false, 'dirigeant remet la pièce');
 reset role;
 select pg_temp.verifier((select count(*) from public.devis_pieces_retirees) = 1, 'une seule ligne de retrait, jamais supprimée');
+insert into public.devis_pieces_retirees(devis_ligne_id, retiree) values ('01000000-0000-0000-0000-000000000111', true);
+select pg_temp.verifier((select doublon from public.commandes_devis_source() where devis_ligne_id = '01000000-0000-0000-0000-000000000111') = 'devis'
+  and (select doublon from public.commandes_devis_source() where devis_ligne_id = '01000000-0000-0000-0000-000000000121') is null,
+  'ligne gardée retirée : l''autre devis reprend la place (ici refusé, affiché, non rappelé)');
+update public.devis_pieces_retirees set retiree = false where devis_ligne_id = '01000000-0000-0000-0000-000000000111';
 update public.v4_bascule set mise_en_service = now() + interval '1 hour';
 set role service_role;
 select pg_temp.verifier(case when extract(isodow from (now() at time zone 'Europe/Paris')) <= 5 then
@@ -213,36 +220,41 @@ delete from public.rappels_commandes;
 
 -- 6. Inscription sans doublon : enveloppe de inscrire
 select e.code as code_ent from public.entreprises e join public.evenements ev on ev.entreprise_id = e.id
-  where ev.id = 'b0000000-0000-0000-0000-000000000016' \gset
+  where ev.id = 'b0000000-0000-0000-0000-0000000000f1' \gset
+insert into public.inscriptions(evenement_id, nom, prenom, telephone, email, code_postal, type_velo, partie_signalee, consentement_le)
+  values ('b0000000-0000-0000-0000-0000000000f1', 'Deja', 'Present', '0600000000', 'Deja.Present@example.com', '69007', 'vae', 'freins', now());
 select count(*) as nb_insc_avant from public.inscriptions \gset
 select count(*) as nb_dem_avant from public.demandes_automatisation where type = 'client' \gset
 set role anon; reset request.jwt.claim.sub;
-select public.inscrire_v4(jsonb_build_object('code_entreprise', :'code_ent', 'evenement_id', 'b0000000-0000-0000-0000-000000000016',
+select public.inscrire_v4(jsonb_build_object('code_entreprise', :'code_ent', 'evenement_id', 'b0000000-0000-0000-0000-0000000000f1',
   'nom', 'Doublon', 'prenom', 'Essai', 'telephone', '0600000009', 'email', 'Neuf.V4@Example.com', 'code_postal', '69007',
   'type_velo', 'vae', 'partie_signalee', 'freins', 'consentement', true))->>'site' as site1 \gset
 select pg_temp.verifier(pg_temp.refuse(format($q$select public.inscrire_v4(jsonb_build_object('code_entreprise', %L, 'evenement_id',
-  'b0000000-0000-0000-0000-000000000016', 'nom', 'Doublon', 'prenom', 'Essai', 'telephone', '0600000009', 'email', '  neuf.v4@example.COM ',
+  'b0000000-0000-0000-0000-0000000000f1', 'nom', 'Doublon', 'prenom', 'Essai', 'telephone', '0600000009', 'email', '  neuf.v4@example.COM ',
   'code_postal', '69007', 'type_velo', 'vae', 'partie_signalee', 'freins', 'consentement', true))$q$, :'code_ent'), 'déjà inscrit'),
   'second envoi du même mail (casse et espaces différents) refusé');
 select pg_temp.verifier(pg_temp.refuse(format($q$select public.inscrire_v4(jsonb_build_object('code_entreprise', %L, 'evenement_id',
-  'b0000000-0000-0000-0000-000000000016', 'nom', 'Un', 'prenom', 'Normal', 'telephone', '0600000000', 'email', 'un@example.com',
+  'b0000000-0000-0000-0000-0000000000f1', 'nom', 'Deja', 'prenom', 'Present', 'telephone', '0600000000', 'email', 'deja.present@example.com',
   'code_postal', '69007', 'type_velo', 'vae', 'partie_signalee', 'freins', 'consentement', true))$q$, :'code_ent'), 'déjà inscrit'),
   'inscription déjà présente en base : refusée');
-select public.inscrire_v4(jsonb_build_object('code_entreprise', :'code_ent', 'evenement_id', 'b0000000-0000-0000-0000-000000000015',
+select public.inscrire_v4(jsonb_build_object('code_entreprise', :'code_ent', 'evenement_id', 'b0000000-0000-0000-0000-0000000000f2',
   'nom', 'Doublon', 'prenom', 'Essai', 'telephone', '0600000009', 'email', 'neuf.v4@example.com', 'code_postal', '69007',
   'type_velo', 'vae', 'partie_signalee', 'freins', 'consentement', true)) is not null as autre_journee \gset
 select pg_temp.verifier(pg_temp.refuse(format($q$select public.inscrire_v4(jsonb_build_object('code_entreprise', %L, 'evenement_id',
   'pas-un-uuid', 'email', 'x@example.com'))$q$, :'code_ent'), 'Choisissez votre journée'), 'journée invalide : message de inscrire');
 select pg_temp.verifier(pg_temp.refuse(format($q$select public.inscrire_v4(jsonb_build_object('code_entreprise', %L, 'evenement_id',
-  'b0000000-0000-0000-0000-000000000016', 'nom', 'Sans', 'prenom', 'Tel', 'telephone', '12', 'email', 'autre.v4@example.com',
+  'b0000000-0000-0000-0000-0000000000f1', 'nom', 'Sans', 'prenom', 'Tel', 'telephone', '12', 'email', 'autre.v4@example.com',
   'code_postal', '69007', 'type_velo', 'vae', 'partie_signalee', 'freins', 'consentement', true))$q$, :'code_ent'), '10 chiffres'),
   'contrôles de inscrire conservés');
 reset role;
-select pg_temp.verifier(:'site1' = 'Site V4 16', 'première inscription acceptée (réponse de inscrire)');
-select pg_temp.verifier((select count(*) from public.inscriptions) = :nb_insc_avant + 2, 'deux inscriptions créées (16/10 et 15/10), aucune en double');
+select pg_temp.verifier(:'site1' = 'Site V4 futur', 'première inscription acceptée (réponse de inscrire)');
+select pg_temp.verifier((select count(*) from public.inscriptions) = :nb_insc_avant + 2, 'deux inscriptions créées (deux journées), aucune en double');
 select pg_temp.verifier((select count(*) from public.demandes_automatisation where type = 'client') = :nb_dem_avant + 2, 'demande client créée par inscrire');
-select pg_temp.verifier((select email from public.inscriptions where evenement_id = 'b0000000-0000-0000-0000-000000000016' and nom = 'Doublon') = 'neuf.v4@example.com',
+select pg_temp.verifier((select email from public.inscriptions where evenement_id = 'b0000000-0000-0000-0000-0000000000f1' and nom = 'Doublon') = 'neuf.v4@example.com',
   'email normalisé par inscrire');
+-- Code d'entreprise étranger à la journée : aucun contrôle de doublon (pas de sondage), refus de inscrire
+select pg_temp.verifier(pg_temp.refuse($q$select public.inscrire_v4(jsonb_build_object('code_entreprise', 'code-inconnu', 'evenement_id',
+  'b0000000-0000-0000-0000-0000000000f1', 'email', 'deja.present@example.com'))$q$, 'Utilisez le lien'), 'code inconnu : message de inscrire, pas de doublon révélé');
 -- Blocage des places : celui de inscrire
 set role anon;
 select public.inscrire_v4(jsonb_build_object('code_entreprise', :'code_ent', 'evenement_id', 'b0000000-0000-0000-0000-0000000000c1',
@@ -253,6 +265,10 @@ select pg_temp.verifier(pg_temp.refuse(format($q$select public.inscrire_v4(jsonb
   'code_postal', '69007', 'type_velo', 'vae', 'partie_signalee', 'freins', 'consentement', true))$q$, :'code_ent'), 'complète'),
   'journée complète : refus de inscrire');
 reset role;
+
+-- 6 bis. inscrire inchangée et appelée par l'enveloppe
+select pg_temp.verifier((select prosrc like '%public.inscrire(p)%' from pg_proc where oid = 'public.inscrire_v4(jsonb)'::regprocedure), 'inscrire_v4 appelle inscrire');
+select pg_temp.verifier((select prosrc not like '%inscrire_v4%' and prosrc like '%insert into public.inscriptions%' from pg_proc where oid = 'public.inscrire(jsonb)'::regprocedure), 'inscrire non remplacée');
 
 -- 7. Résumé de facture pour TC_14 : demande 'controle' seulement ; sortie vide sinon
 insert into public.factures(id, inscription_id, statut) values ('a1000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000002', 'a_valider')

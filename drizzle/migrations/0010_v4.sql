@@ -8,8 +8,12 @@
 --   commandes_devis_source : pièces des devis reliées au catalogue (jamais la main d'oeuvre ni une ligne libre), stock « À commander »
 --     ou « Stock inconnu » (même calcul que stock_pieces), avec provenance et règle anti-doublon (colonne doublon) :
 --       (a) la même pièce (piece_id) est déjà dans la liste L1 pour le même vélo (fiche terminée, pièce posée « à commander ») : 'fiche' ;
---       (b) la même pièce figure sur plusieurs devis de la même fiche : une seule ligne gardée (accepté, puis en attente, puis refusé,
---           puis la plus récente) ; les autres : 'devis'.
+--       (b) la même pièce figure sur plusieurs devis de la même fiche : une seule ligne gardée (non retirée d'abord, puis accepté,
+--           en attente, refusé, puis la plus récente) ; les autres : 'devis'.
+--     LIMITES écrites (relecture CONS-120) : la même pièce deux fois sur un même devis donne une seule ligne (quantité de la ligne gardée) ;
+--       une main d'oeuvre du catalogue sans ligne 'main_oeuvre' dans catalogue_axonaut serait prise pour une pièce (en base réelle,
+--       MO-H a sa ligne) ; un devis sans fiche n'a pas de journée et n'entre pas dans la liste ; une ligne masquée par le doublon 'fiche'
+--       n'est pas rappelée même si la pièce de la fiche est elle-même hors rappel (fiche terminée avant la mise en service de L1).
 --   commandes_v4_journees, commandes_v4_journee : écran « À commander » (pièces des fiches L1 et pièces des devis), dirigeant et atelier.
 --   devis_piece_retirer : case de retrait (dirigeant, atelier, mécanicien). devis_pieces_etat : état des lignes d'un devis pour la fiche.
 --   rappel_commandes_reserver_v4 : rappel de 15 h du workflow TC_30 v2 ; même règle que rappel_commandes_reserver pour les pièces L1,
@@ -79,7 +83,7 @@ language sql stable security definer set search_path = public as $$
       and not exists (select 1 from public.catalogue_axonaut m where m.piece_id = dl.piece_id and m.role = 'main_oeuvre')
   ), candidates as (
     select l.*, row_number() over (partition by l.fiche_id, l.piece_id
-             order by case l.etat_devis when 'accepte' then 0 when 'en_attente' then 1 else 2 end, l.cree_le desc, l.devis_ligne_id) as rang
+             order by l.retiree, case l.etat_devis when 'accepte' then 0 when 'en_attente' then 1 else 2 end, l.cree_le desc, l.devis_ligne_id) as rang
     from lignes l where l.etat_stock in ('a_commander', 'inconnu')
   )
   select c.devis_ligne_id, c.devis_id, c.devis_reference, c.devis_statut, c.etat_devis, c.fiche_id, c.evenement_id,
@@ -216,13 +220,17 @@ end $$;
 -- 9. Inscription sans doublon (TC-23) : ENVELOPPE de inscrire, qui reste la seule à créer l'inscription, la demande pour TC_00
 --    et à bloquer les places. Le verrou de la journée (FOR UPDATE, repris par inscrire dans la même transaction) évite que deux
 --    envois simultanés du même mail passent tous les deux. Un identifiant de journée invalide est laissé au contrôle de inscrire.
+--    LIMITE : inscrire reste exécutable par anon (droit existant, non modifié) ; l'anti-doublon vaut pour l'app, qui appelle inscrire_v4.
 create or replace function public.inscrire_v4(p jsonb)
 returns jsonb language plpgsql security definer set search_path = public as $$
 declare
   v_email text := lower(btrim(coalesce(p->>'email','')));
   v_evid text := coalesce(p->>'evenement_id','');
 begin
-  if v_evid ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$' and v_email <> '' then
+  -- Contrôle seulement pour une journée de l'entreprise du lien (évite de sonder une journée inconnue) ; sinon inscrire refuse elle-même.
+  if v_evid ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$' and v_email <> ''
+     and exists (select 1 from public.evenements ev join public.entreprises e on e.id = ev.entreprise_id
+                 where ev.id = v_evid::uuid and e.code = coalesce(p->>'code_entreprise','')) then
     perform 1 from public.evenements where id = v_evid::uuid for update;
     if exists (select 1 from public.inscriptions i where i.evenement_id = v_evid::uuid and lower(btrim(i.email)) = v_email) then
       raise exception 'Vous êtes déjà inscrit à cette journée avec cette adresse email. Une seule inscription par personne et par journée.';
