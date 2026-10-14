@@ -84,3 +84,5 @@ cd <repository-name>
 npm i
 npm run dev
 ```
+
+<!-- Republication du 2026-10-14 (agent STOCK) : commit neutre pour relancer la publication Lovable. -->
