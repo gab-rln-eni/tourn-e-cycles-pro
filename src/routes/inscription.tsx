@@ -199,7 +199,8 @@ function Inscription() {
       return;
     }
     setEnvoi(true);
-    const { data, error } = await supabase.rpc("inscrire", {
+    // V4 (TC-23) : inscrire_v4 refuse une seconde inscription du même mail à la même journée, puis appelle inscrire.
+    const { data, error } = await supabase.rpc("inscrire_v4", {
       p: { ...f, evenement_id: evId, code_entreprise: c },
     });
     setEnvoi(false);

@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { euros, messageErreur, totaux } from "@/lib/format";
 import type { Avis } from "@/lib/devis";
 import { etatPiece, libelleStock, lireStockPieces, type EtatStock } from "@/lib/stock";
+import { lireEtatsLignesDevis, type EtatLigneDevis } from "@/lib/commandes";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -58,6 +59,33 @@ export function LignesDevis({
       actif = false;
     };
   }, []);
+  // Liste « À commander » (V4) : état de chaque ligne reliée au catalogue ; en cas d'échec, aucune case, jamais bloquant.
+  const [etats, setEtats] = useState<Map<string, EtatLigneDevis>>(new Map());
+  const [relire, setRelire] = useState(0);
+  const cleLignes = lignes.map((l) => `${l.id}:${l.piece_id ?? ""}`).join(",");
+  useEffect(() => {
+    let actif = true;
+    void supabase.rpc("devis_pieces_etat", { p_devis: devisId }).then(({ data, error }) => {
+      if (actif && !error) setEtats(lireEtatsLignesDevis(data));
+    });
+    return () => {
+      actif = false;
+    };
+  }, [devisId, cleLignes, relire]);
+  async function retirer(ligneId: string, retiree: boolean) {
+    const { error } = await supabase.rpc("devis_piece_retirer", {
+      p_ligne: ligneId,
+      p_retiree: retiree,
+    });
+    if (error) toast.error(`Non enregistré : ${messageErreur(error)}`);
+    else
+      toast.success(
+        retiree
+          ? "Pièce retirée de la liste À commander."
+          : "Pièce remise dans la liste À commander.",
+      );
+    setRelire((n) => n + 1);
+  }
   const ordreSuivant = lignes.reduce((m, l) => Math.max(m, l.ordre), 0) + 1;
 
   async function exec(p: PromiseLike<{ error: unknown }>) {
@@ -75,6 +103,9 @@ export function LignesDevis({
           <li key={l.id} className="rounded-lg border-2 p-3">
             <p className="font-bold">{l.libelle}</p>
             {l.piece_id && <EtiquetteStock etat={etatPiece(stock, l.piece_id)} />}
+            {etats.has(l.id) && (
+              <CaseACommander ligneId={l.id} etat={etats.get(l.id)!} onRetirer={retirer} />
+            )}
             <div className="mt-2 flex flex-wrap items-center gap-2">
               <Button
                 size="icon"
@@ -223,6 +254,38 @@ export function LignesDevis({
         </div>
       )}
     </div>
+  );
+}
+
+/** Case de la liste « À commander » pour une pièce du devis qui n'est pas en stock (V4). */
+function CaseACommander({
+  ligneId,
+  etat,
+  onRetirer,
+}: {
+  ligneId: string;
+  etat: EtatLigneDevis;
+  onRetirer: (ligneId: string, retiree: boolean) => void;
+}) {
+  if (etat.doublon === "fiche")
+    return <p className="mt-1 text-sm">Déjà dans la liste À commander par la fiche.</p>;
+  if (etat.doublon === "devis")
+    return <p className="mt-1 text-sm">Déjà dans la liste À commander par un autre devis.</p>;
+  const id = `devis-a-commander-${ligneId}`;
+  return (
+    <label htmlFor={id} className="mt-2 flex min-h-12 cursor-pointer items-center gap-3">
+      <input
+        id={id}
+        type="checkbox"
+        className="size-7 shrink-0 accent-primary"
+        checked={!etat.retiree}
+        onChange={(e) => onRetirer(ligneId, !e.target.checked)}
+      />
+      <span>
+        Dans la liste À commander
+        {etat.etatDevis === "refuse" ? " (devis refusé : jamais rappelée)" : ""}
+      </span>
+    </label>
   );
 }
 

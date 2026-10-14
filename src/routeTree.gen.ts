@@ -23,7 +23,9 @@ import { Route as ApiPublicCatalogueAxonautRouteImport } from './routes/api/publ
 import { Route as ApiPublicDemandeResultatRouteImport } from './routes/api/public/demande-resultat'
 import { Route as ApiPublicDemandesATraiterRouteImport } from './routes/api/public/demandes-a-traiter'
 import { Route as ApiPublicDemandesATraiterV2RouteImport } from './routes/api/public/demandes-a-traiter-v2'
+import { Route as ApiPublicFactureResumeV4RouteImport } from './routes/api/public/facture-resume-v4'
 import { Route as ApiPublicRappelCommandesRouteImport } from './routes/api/public/rappel-commandes'
+import { Route as ApiPublicRappelCommandesV4RouteImport } from './routes/api/public/rappel-commandes-v4'
 import { Route as ApiPublicStockAxonautRouteImport } from './routes/api/public/stock-axonaut'
 
 const IndexRoute = IndexRouteImport.update({
@@ -100,10 +102,22 @@ const ApiPublicDemandesATraiterV2Route =
     path: '/api/public/demandes-a-traiter-v2',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicFactureResumeV4Route =
+  ApiPublicFactureResumeV4RouteImport.update({
+    id: '/api/public/facture-resume-v4',
+    path: '/api/public/facture-resume-v4',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicRappelCommandesRoute =
   ApiPublicRappelCommandesRouteImport.update({
     id: '/api/public/rappel-commandes',
     path: '/api/public/rappel-commandes',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicRappelCommandesV4Route =
+  ApiPublicRappelCommandesV4RouteImport.update({
+    id: '/api/public/rappel-commandes-v4',
+    path: '/api/public/rappel-commandes-v4',
     getParentRoute: () => rootRouteImport,
   } as any)
 const ApiPublicStockAxonautRoute = ApiPublicStockAxonautRouteImport.update({
@@ -127,7 +141,9 @@ export interface FileRoutesByFullPath {
   '/api/public/demande-resultat': typeof ApiPublicDemandeResultatRoute
   '/api/public/demandes-a-traiter': typeof ApiPublicDemandesATraiterRoute
   '/api/public/demandes-a-traiter-v2': typeof ApiPublicDemandesATraiterV2Route
+  '/api/public/facture-resume-v4': typeof ApiPublicFactureResumeV4Route
   '/api/public/rappel-commandes': typeof ApiPublicRappelCommandesRoute
+  '/api/public/rappel-commandes-v4': typeof ApiPublicRappelCommandesV4Route
   '/api/public/stock-axonaut': typeof ApiPublicStockAxonautRoute
 }
 export interface FileRoutesByTo {
@@ -145,7 +161,9 @@ export interface FileRoutesByTo {
   '/api/public/demande-resultat': typeof ApiPublicDemandeResultatRoute
   '/api/public/demandes-a-traiter': typeof ApiPublicDemandesATraiterRoute
   '/api/public/demandes-a-traiter-v2': typeof ApiPublicDemandesATraiterV2Route
+  '/api/public/facture-resume-v4': typeof ApiPublicFactureResumeV4Route
   '/api/public/rappel-commandes': typeof ApiPublicRappelCommandesRoute
+  '/api/public/rappel-commandes-v4': typeof ApiPublicRappelCommandesV4Route
   '/api/public/stock-axonaut': typeof ApiPublicStockAxonautRoute
 }
 export interface FileRoutesById {
@@ -164,7 +182,9 @@ export interface FileRoutesById {
   '/api/public/demande-resultat': typeof ApiPublicDemandeResultatRoute
   '/api/public/demandes-a-traiter': typeof ApiPublicDemandesATraiterRoute
   '/api/public/demandes-a-traiter-v2': typeof ApiPublicDemandesATraiterV2Route
+  '/api/public/facture-resume-v4': typeof ApiPublicFactureResumeV4Route
   '/api/public/rappel-commandes': typeof ApiPublicRappelCommandesRoute
+  '/api/public/rappel-commandes-v4': typeof ApiPublicRappelCommandesV4Route
   '/api/public/stock-axonaut': typeof ApiPublicStockAxonautRoute
 }
 export interface FileRouteTypes {
@@ -184,7 +204,9 @@ export interface FileRouteTypes {
     | '/api/public/demande-resultat'
     | '/api/public/demandes-a-traiter'
     | '/api/public/demandes-a-traiter-v2'
+    | '/api/public/facture-resume-v4'
     | '/api/public/rappel-commandes'
+    | '/api/public/rappel-commandes-v4'
     | '/api/public/stock-axonaut'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -202,7 +224,9 @@ export interface FileRouteTypes {
     | '/api/public/demande-resultat'
     | '/api/public/demandes-a-traiter'
     | '/api/public/demandes-a-traiter-v2'
+    | '/api/public/facture-resume-v4'
     | '/api/public/rappel-commandes'
+    | '/api/public/rappel-commandes-v4'
     | '/api/public/stock-axonaut'
   id:
     | '__root__'
@@ -220,7 +244,9 @@ export interface FileRouteTypes {
     | '/api/public/demande-resultat'
     | '/api/public/demandes-a-traiter'
     | '/api/public/demandes-a-traiter-v2'
+    | '/api/public/facture-resume-v4'
     | '/api/public/rappel-commandes'
+    | '/api/public/rappel-commandes-v4'
     | '/api/public/stock-axonaut'
   fileRoutesById: FileRoutesById
 }
@@ -239,7 +265,9 @@ export interface RootRouteChildren {
   ApiPublicDemandeResultatRoute: typeof ApiPublicDemandeResultatRoute
   ApiPublicDemandesATraiterRoute: typeof ApiPublicDemandesATraiterRoute
   ApiPublicDemandesATraiterV2Route: typeof ApiPublicDemandesATraiterV2Route
+  ApiPublicFactureResumeV4Route: typeof ApiPublicFactureResumeV4Route
   ApiPublicRappelCommandesRoute: typeof ApiPublicRappelCommandesRoute
+  ApiPublicRappelCommandesV4Route: typeof ApiPublicRappelCommandesV4Route
   ApiPublicStockAxonautRoute: typeof ApiPublicStockAxonautRoute
 }
 
@@ -343,11 +371,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicDemandesATraiterV2RouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/facture-resume-v4': {
+      id: '/api/public/facture-resume-v4'
+      path: '/api/public/facture-resume-v4'
+      fullPath: '/api/public/facture-resume-v4'
+      preLoaderRoute: typeof ApiPublicFactureResumeV4RouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/rappel-commandes': {
       id: '/api/public/rappel-commandes'
       path: '/api/public/rappel-commandes'
       fullPath: '/api/public/rappel-commandes'
       preLoaderRoute: typeof ApiPublicRappelCommandesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/rappel-commandes-v4': {
+      id: '/api/public/rappel-commandes-v4'
+      path: '/api/public/rappel-commandes-v4'
+      fullPath: '/api/public/rappel-commandes-v4'
+      preLoaderRoute: typeof ApiPublicRappelCommandesV4RouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/stock-axonaut': {
@@ -375,7 +417,9 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicDemandeResultatRoute: ApiPublicDemandeResultatRoute,
   ApiPublicDemandesATraiterRoute: ApiPublicDemandesATraiterRoute,
   ApiPublicDemandesATraiterV2Route: ApiPublicDemandesATraiterV2Route,
+  ApiPublicFactureResumeV4Route: ApiPublicFactureResumeV4Route,
   ApiPublicRappelCommandesRoute: ApiPublicRappelCommandesRoute,
+  ApiPublicRappelCommandesV4Route: ApiPublicRappelCommandesV4Route,
   ApiPublicStockAxonautRoute: ApiPublicStockAxonautRoute,
 }
 export const routeTree = rootRouteImport

@@ -652,6 +652,14 @@ export type Database = {
         Returns: Json
       }
       acces_retirer: { Args: { p_id: string }; Returns: Json }
+      v4_bascule_etat: { Args: never; Returns: boolean }
+      commandes_v4_journees: { Args: never; Returns: Json }
+      commandes_v4_journee: { Args: { p_evenement: string }; Returns: Json }
+      devis_piece_retirer: { Args: { p_ligne: string; p_retiree: boolean }; Returns: Json }
+      devis_pieces_etat: { Args: { p_devis: string }; Returns: Json }
+      rappel_commandes_reserver_v4: { Args: { p_essai?: boolean }; Returns: Json }
+      inscrire_v4: { Args: { p: Json }; Returns: Json }
+      facture_resume_v4: { Args: { p_demande: string }; Returns: Json }
     }
     Enums: {
       app_role: "dirigeant" | "mecanicien" | "atelier"

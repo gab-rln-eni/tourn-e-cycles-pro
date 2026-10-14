@@ -33,6 +33,11 @@ import {
 export const Route = createFileRoute("/bureau")({
   ssr: false,
   beforeLoad: requireRoles(["dirigeant", "atelier"]),
+  // V4 : lien direct vers une facture (mail « facture prête à valider », TC_14) : /bureau?facture=<identifiant>.
+  validateSearch: (s: Record<string, unknown>): { facture?: string } => {
+    const f = s["facture"];
+    return typeof f === "string" && /^[0-9a-f-]{36}$/.test(f) ? { facture: f } : {};
+  },
   head: () => ({
     meta: [
       { title: "Bureau | Tournée Cycles" },
@@ -60,7 +65,8 @@ type FactureListe = {
 };
 
 function Bureau() {
-  const [ouverte, setOuverte] = useState<string | null>(null);
+  const { facture } = Route.useSearch();
+  const [ouverte, setOuverte] = useState<string | null>(facture ?? null);
   return (
     <div className="space-y-4">
       <h1 className="text-3xl font-bold text-primary">Bureau</h1>
