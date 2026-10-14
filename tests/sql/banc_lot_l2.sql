@@ -44,4 +44,21 @@ set role authenticated; set request.jwt.claim.sub = '00000000-0000-0000-0000-000
 select pg_temp.verifier((select count(*) from public.stats_entreprises) = :avant_test, 'atelier : même lecture');
 reset role;
 
+-- 5. Organes comptés une fois par fiche et par groupe ; pièce LOTS-TEST : toute la fiche exclue (correctif 0008, si présent)
+select to_regclass('public.stats_entreprises') is not null and exists (select 1 from pg_views where viewname = 'stats_entreprises' and definition ilike '%distinct%') as v8 \gset
+\if :v8
+select f.id as fiche_banc from public.fiches f join public.inscriptions i on i.id = f.inscription_id where i.nom not ilike 'LOTS-TEST%' order by f.debut_le limit 1 \gset
+insert into public.fiche_points(fiche_id, groupe, point, etat) values (:'fiche_banc', 'Frein avant', 'Usure', 'a_regler');
+set role authenticated; set request.jwt.claim.sub = '00000000-0000-0000-0000-00000000000d';
+select pg_temp.verifier((select count(*) from public.stats_entreprises where genre = 'organe' and libelle = 'Frein avant') = (select count(distinct fp.fiche_id) from public.fiche_points fp where fp.groupe = 'Frein avant' and fp.etat <> 'bon' and fp.fiche_id = :'fiche_banc'), 'organe : une fois par fiche');
+reset role;
+insert into public.inscriptions(id, evenement_id, nom, prenom, telephone, email, code_postal, type_velo, partie_signalee, consentement_le)
+  select '50000000-0000-0000-0000-000000000011', id, 'Normal', 'Piece', '0600000000', 'p@example.com', '69007', 'vae', 'freins', now() from public.evenements limit 1;
+insert into public.fiches(id, inscription_id, statut) values ('50000000-0000-0000-0000-000000000012', '50000000-0000-0000-0000-000000000011', 'terminee');
+insert into public.pieces_posees(fiche_id, libelle, quantite) values ('50000000-0000-0000-0000-000000000012', 'Pneu LOTS-TEST', 1);
+set role authenticated; set request.jwt.claim.sub = '00000000-0000-0000-0000-00000000000d';
+select pg_temp.verifier((select count(*) from public.stats_entreprises where genre = 'velo') = :nb_fiches, 'pièce LOTS-TEST : fiche entière exclue');
+reset role;
+\endif
+
 \echo BANC L2 : TOUTES LES ASSERTIONS PASSENT

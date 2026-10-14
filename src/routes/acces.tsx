@@ -147,8 +147,10 @@ function AccesPage() {
               {ROLE_ACCES[a.role] ?? a.role} : {ETAT[a.etat] ?? a.etat}
               {a.expire_le ? `, jusqu'au ${dateLongue(a.expire_le)}` : ""}
             </p>
-            {a.protege ? (
-              <p className="text-sm font-bold">Accès protégé : ne peut pas être retiré.</p>
+            {a.protege && a.etat === "actif" ? (
+              <p className="text-sm font-bold">
+                Accès protégé : ne peut être ni retiré ni raccourci.
+              </p>
             ) : a.etat === "actif" ? (
               <Button
                 variant="outline"

@@ -47,8 +47,9 @@ begin
       returning * into v_a;
     return jsonb_build_object('ok', true, 'action', 'donne', 'id', v_a.id);
   end if;
+  -- Accès protégé : on peut le réactiver ou le prolonger, jamais le raccourcir
   if public.acces_protege(v_a.email, v_a.role)
-     and (v_a.revoque_le is not null or v_a.expire_le is null or p_expire_le < v_a.expire_le) then
+     and (v_a.expire_le is null or p_expire_le < v_a.expire_le) then
     raise exception 'Cet accès est protégé : il ne peut être ni retiré ni raccourci.';
   end if;
   update public.acces set revoque_le = null, expire_le = p_expire_le where id = v_a.id;

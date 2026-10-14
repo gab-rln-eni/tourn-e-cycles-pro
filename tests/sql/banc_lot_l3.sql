@@ -64,6 +64,14 @@ reset role;
 select pg_temp.verifier((select revoque_le is null and expire_le = '2026-10-26 22:59:00+00' from public.acces where id = :'id_corr'), 'correcteur intact');
 select pg_temp.verifier((select count(*) from public.acces where role = 'dirigeant' and revoque_le is not null) = 0, 'aucun dirigeant retiré');
 
+-- 3 bis. Accès protégé retiré (hors écran, par exemple avant L3) : il peut être redonné, sans raccourcir
+update public.acces set revoque_le = now() where id = :'id_corr';
+set role authenticated; set request.jwt.claim.sub = '00000000-0000-0000-0000-00000000000d';
+select pg_temp.verifier(pg_temp.refuse($q$select public.acces_donner('gabriel.roulon+correcteur.meca@gmail.com', 'mecanicien', '2026-10-20 10:00+00')$q$, 'protégé'), 'correcteur retiré : raccourcir refusé');
+select pg_temp.verifier(public.acces_donner('gabriel.roulon+correcteur.meca@gmail.com', 'mecanicien', '2026-10-26 22:59:00+00')->>'action' = 'redonne', 'correcteur retiré : redonné');
+reset role;
+select pg_temp.verifier((select revoque_le is null from public.acces where id = :'id_corr'), 'correcteur réactivé');
+
 -- 4. Aucune suppression : nombre de lignes = avant + 1 (presta)
 select pg_temp.verifier((select count(*) from public.acces) = :nb_avant + 1, 'aucune suppression, un seul ajout');
 
