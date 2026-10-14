@@ -641,6 +641,11 @@ export type Database = {
       commandes_pieces_journee: { Args: { p_evenement: string }; Returns: Json }
       commandes_pieces_marquer: { Args: { p_piece: string; p_commandee: boolean }; Returns: Json }
       rappel_commandes_reserver: { Args: { p_essai?: boolean }; Returns: Json }
+      reserver_demandes_v2: { Args: { p_limite?: number }; Returns: Json }
+      donnees_demande_v2: { Args: { p_type: string; p_objet: string }; Returns: Json }
+      catalogue_axonaut_liste: { Args: never; Returns: Json }
+      stock_axonaut_ecrire: { Args: { p: Json }; Returns: Json }
+      stock_pieces: { Args: never; Returns: Json }
       acces_liste: { Args: never; Returns: Json }
       acces_donner: {
         Args: { p_email: string; p_role: Database["public"]["Enums"]["app_role"]; p_expire_le: string }

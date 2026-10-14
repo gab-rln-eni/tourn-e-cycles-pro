@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { AlertTriangle, CheckCircle2, Minus, Plus, Trash2, XCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { euros, messageErreur, totaux } from "@/lib/format";
 import type { Avis } from "@/lib/devis";
+import { etatPiece, libelleStock, lireStockPieces, type EtatStock } from "@/lib/stock";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -46,6 +47,17 @@ export function LignesDevis({
         `${c.reference} ${c.libelle}`.toLowerCase().includes(recherche.trim().toLowerCase()),
       )
     : [];
+  // Stock de chaque pièce du catalogue (agent STOCK) ; en cas d'échec, « Stock inconnu », jamais bloquant.
+  const [stock, setStock] = useState<Map<string, EtatStock>>(new Map());
+  useEffect(() => {
+    let actif = true;
+    void supabase.rpc("stock_pieces").then(({ data, error }) => {
+      if (actif && !error) setStock(lireStockPieces(data));
+    });
+    return () => {
+      actif = false;
+    };
+  }, []);
   const ordreSuivant = lignes.reduce((m, l) => Math.max(m, l.ordre), 0) + 1;
 
   async function exec(p: PromiseLike<{ error: unknown }>) {
@@ -62,6 +74,7 @@ export function LignesDevis({
         {lignes.map((l) => (
           <li key={l.id} className="rounded-lg border-2 p-3">
             <p className="font-bold">{l.libelle}</p>
+            {l.piece_id && <EtiquetteStock etat={etatPiece(stock, l.piece_id)} />}
             <div className="mt-2 flex flex-wrap items-center gap-2">
               <Button
                 size="icon"
@@ -169,7 +182,9 @@ export function LignesDevis({
                       );
                     }}
                   >
-                    <span>{c.libelle}</span>
+                    <span>
+                      {c.libelle} <EtiquetteStock etat={etatPiece(stock, c.id)} />
+                    </span>
                     <span>{euros(Number(c.prix_vente_ht))}</span>
                   </Button>
                 </li>
@@ -208,6 +223,24 @@ export function LignesDevis({
         </div>
       )}
     </div>
+  );
+}
+
+/** Stock de la pièce lu dans Axonaut : en stock, à commander, ou inconnu (pièce non reliée ou lecture absente). */
+function EtiquetteStock({ etat }: { etat: EtatStock }) {
+  return (
+    <span
+      className={
+        "ml-1 inline-block rounded px-2 py-0.5 text-sm font-normal " +
+        (etat === "en_stock"
+          ? "bg-success-soft"
+          : etat === "a_commander"
+            ? "bg-warning-soft"
+            : "bg-muted")
+      }
+    >
+      {libelleStock[etat]}
+    </span>
   );
 }
 

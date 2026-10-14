@@ -19,9 +19,12 @@ import { Route as JourneeRouteImport } from './routes/journee'
 import { Route as StatistiquesRouteImport } from './routes/statistiques'
 import { Route as DevisJetonRouteImport } from './routes/devis.$jeton'
 import { Route as FicheInscriptionIdRouteImport } from './routes/fiche.$inscriptionId'
+import { Route as ApiPublicCatalogueAxonautRouteImport } from './routes/api/public/catalogue-axonaut'
 import { Route as ApiPublicDemandeResultatRouteImport } from './routes/api/public/demande-resultat'
 import { Route as ApiPublicDemandesATraiterRouteImport } from './routes/api/public/demandes-a-traiter'
+import { Route as ApiPublicDemandesATraiterV2RouteImport } from './routes/api/public/demandes-a-traiter-v2'
 import { Route as ApiPublicRappelCommandesRouteImport } from './routes/api/public/rappel-commandes'
+import { Route as ApiPublicStockAxonautRouteImport } from './routes/api/public/stock-axonaut'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -73,6 +76,12 @@ const FicheInscriptionIdRoute = FicheInscriptionIdRouteImport.update({
   path: '/fiche/$inscriptionId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicCatalogueAxonautRoute =
+  ApiPublicCatalogueAxonautRouteImport.update({
+    id: '/api/public/catalogue-axonaut',
+    path: '/api/public/catalogue-axonaut',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicDemandeResultatRoute =
   ApiPublicDemandeResultatRouteImport.update({
     id: '/api/public/demande-resultat',
@@ -85,12 +94,23 @@ const ApiPublicDemandesATraiterRoute =
     path: '/api/public/demandes-a-traiter',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicDemandesATraiterV2Route =
+  ApiPublicDemandesATraiterV2RouteImport.update({
+    id: '/api/public/demandes-a-traiter-v2',
+    path: '/api/public/demandes-a-traiter-v2',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicRappelCommandesRoute =
   ApiPublicRappelCommandesRouteImport.update({
     id: '/api/public/rappel-commandes',
     path: '/api/public/rappel-commandes',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicStockAxonautRoute = ApiPublicStockAxonautRouteImport.update({
+  id: '/api/public/stock-axonaut',
+  path: '/api/public/stock-axonaut',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -103,9 +123,12 @@ export interface FileRoutesByFullPath {
   '/statistiques': typeof StatistiquesRoute
   '/devis/$jeton': typeof DevisJetonRoute
   '/fiche/$inscriptionId': typeof FicheInscriptionIdRoute
+  '/api/public/catalogue-axonaut': typeof ApiPublicCatalogueAxonautRoute
   '/api/public/demande-resultat': typeof ApiPublicDemandeResultatRoute
   '/api/public/demandes-a-traiter': typeof ApiPublicDemandesATraiterRoute
+  '/api/public/demandes-a-traiter-v2': typeof ApiPublicDemandesATraiterV2Route
   '/api/public/rappel-commandes': typeof ApiPublicRappelCommandesRoute
+  '/api/public/stock-axonaut': typeof ApiPublicStockAxonautRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -118,9 +141,12 @@ export interface FileRoutesByTo {
   '/statistiques': typeof StatistiquesRoute
   '/devis/$jeton': typeof DevisJetonRoute
   '/fiche/$inscriptionId': typeof FicheInscriptionIdRoute
+  '/api/public/catalogue-axonaut': typeof ApiPublicCatalogueAxonautRoute
   '/api/public/demande-resultat': typeof ApiPublicDemandeResultatRoute
   '/api/public/demandes-a-traiter': typeof ApiPublicDemandesATraiterRoute
+  '/api/public/demandes-a-traiter-v2': typeof ApiPublicDemandesATraiterV2Route
   '/api/public/rappel-commandes': typeof ApiPublicRappelCommandesRoute
+  '/api/public/stock-axonaut': typeof ApiPublicStockAxonautRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -134,9 +160,12 @@ export interface FileRoutesById {
   '/statistiques': typeof StatistiquesRoute
   '/devis/$jeton': typeof DevisJetonRoute
   '/fiche/$inscriptionId': typeof FicheInscriptionIdRoute
+  '/api/public/catalogue-axonaut': typeof ApiPublicCatalogueAxonautRoute
   '/api/public/demande-resultat': typeof ApiPublicDemandeResultatRoute
   '/api/public/demandes-a-traiter': typeof ApiPublicDemandesATraiterRoute
+  '/api/public/demandes-a-traiter-v2': typeof ApiPublicDemandesATraiterV2Route
   '/api/public/rappel-commandes': typeof ApiPublicRappelCommandesRoute
+  '/api/public/stock-axonaut': typeof ApiPublicStockAxonautRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -151,9 +180,12 @@ export interface FileRouteTypes {
     | '/statistiques'
     | '/devis/$jeton'
     | '/fiche/$inscriptionId'
+    | '/api/public/catalogue-axonaut'
     | '/api/public/demande-resultat'
     | '/api/public/demandes-a-traiter'
+    | '/api/public/demandes-a-traiter-v2'
     | '/api/public/rappel-commandes'
+    | '/api/public/stock-axonaut'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -166,9 +198,12 @@ export interface FileRouteTypes {
     | '/statistiques'
     | '/devis/$jeton'
     | '/fiche/$inscriptionId'
+    | '/api/public/catalogue-axonaut'
     | '/api/public/demande-resultat'
     | '/api/public/demandes-a-traiter'
+    | '/api/public/demandes-a-traiter-v2'
     | '/api/public/rappel-commandes'
+    | '/api/public/stock-axonaut'
   id:
     | '__root__'
     | '/'
@@ -181,9 +216,12 @@ export interface FileRouteTypes {
     | '/statistiques'
     | '/devis/$jeton'
     | '/fiche/$inscriptionId'
+    | '/api/public/catalogue-axonaut'
     | '/api/public/demande-resultat'
     | '/api/public/demandes-a-traiter'
+    | '/api/public/demandes-a-traiter-v2'
     | '/api/public/rappel-commandes'
+    | '/api/public/stock-axonaut'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -197,9 +235,12 @@ export interface RootRouteChildren {
   StatistiquesRoute: typeof StatistiquesRoute
   DevisJetonRoute: typeof DevisJetonRoute
   FicheInscriptionIdRoute: typeof FicheInscriptionIdRoute
+  ApiPublicCatalogueAxonautRoute: typeof ApiPublicCatalogueAxonautRoute
   ApiPublicDemandeResultatRoute: typeof ApiPublicDemandeResultatRoute
   ApiPublicDemandesATraiterRoute: typeof ApiPublicDemandesATraiterRoute
+  ApiPublicDemandesATraiterV2Route: typeof ApiPublicDemandesATraiterV2Route
   ApiPublicRappelCommandesRoute: typeof ApiPublicRappelCommandesRoute
+  ApiPublicStockAxonautRoute: typeof ApiPublicStockAxonautRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -274,6 +315,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FicheInscriptionIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/catalogue-axonaut': {
+      id: '/api/public/catalogue-axonaut'
+      path: '/api/public/catalogue-axonaut'
+      fullPath: '/api/public/catalogue-axonaut'
+      preLoaderRoute: typeof ApiPublicCatalogueAxonautRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/demande-resultat': {
       id: '/api/public/demande-resultat'
       path: '/api/public/demande-resultat'
@@ -288,11 +336,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicDemandesATraiterRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/demandes-a-traiter-v2': {
+      id: '/api/public/demandes-a-traiter-v2'
+      path: '/api/public/demandes-a-traiter-v2'
+      fullPath: '/api/public/demandes-a-traiter-v2'
+      preLoaderRoute: typeof ApiPublicDemandesATraiterV2RouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/rappel-commandes': {
       id: '/api/public/rappel-commandes'
       path: '/api/public/rappel-commandes'
       fullPath: '/api/public/rappel-commandes'
       preLoaderRoute: typeof ApiPublicRappelCommandesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/stock-axonaut': {
+      id: '/api/public/stock-axonaut'
+      path: '/api/public/stock-axonaut'
+      fullPath: '/api/public/stock-axonaut'
+      preLoaderRoute: typeof ApiPublicStockAxonautRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -309,9 +371,12 @@ const rootRouteChildren: RootRouteChildren = {
   StatistiquesRoute: StatistiquesRoute,
   DevisJetonRoute: DevisJetonRoute,
   FicheInscriptionIdRoute: FicheInscriptionIdRoute,
+  ApiPublicCatalogueAxonautRoute: ApiPublicCatalogueAxonautRoute,
   ApiPublicDemandeResultatRoute: ApiPublicDemandeResultatRoute,
   ApiPublicDemandesATraiterRoute: ApiPublicDemandesATraiterRoute,
+  ApiPublicDemandesATraiterV2Route: ApiPublicDemandesATraiterV2Route,
   ApiPublicRappelCommandesRoute: ApiPublicRappelCommandesRoute,
+  ApiPublicStockAxonautRoute: ApiPublicStockAxonautRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
