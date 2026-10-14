@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { requireRoles } from "@/lib/auth";
@@ -8,6 +8,7 @@ import { dateHeure, dateLongue, messageErreur, quantiteFr } from "@/lib/format";
 import { Label } from "@/components/ui/label";
 import { ETAT_DEVIS_PIECE, dateDevis, lireEtatStock } from "@/lib/commandes";
 import { libelleStock } from "@/lib/stock";
+import { journeeAffichee } from "@/lib/commandes-journee";
 
 // Lot L1 : pièces marquées « à commander » sur les fiches terminées, par journée, avec la case « commandée ».
 // V4 (agent V4, 2026-10-14) : s'y ajoutent les pièces des devis reliées au catalogue (stock « À commander » ou « Stock inconnu »),
@@ -73,8 +74,11 @@ function Commandes() {
     },
   });
   const liste = journees.data ?? [];
-  const parDefaut = liste.find((j) => j.nb_a_commander > 0) ?? liste[0];
-  const actif = choix ?? parDefaut?.evenement_id ?? null;
+  // Correctif L1 : la journée retenue au premier affichage reste affichée tant que l'utilisateur n'en choisit pas une autre
+  // (sinon cocher la dernière pièce d'une journée faisait passer l'écran sur une autre journée).
+  const retenue = useRef<string | null>(null);
+  const actif = journeeAffichee(liste, choix ?? retenue.current);
+  retenue.current = actif;
 
   return (
     <div className="space-y-5">
