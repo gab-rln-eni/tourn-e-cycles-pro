@@ -3,6 +3,7 @@ import type { EtatStock } from "@/lib/stock";
 
 /** État du devis d'où vient une pièce, en libellé. */
 export const ETAT_DEVIS_PIECE: Record<string, string> = {
+  brouillon: "brouillon, non envoyé",
   en_attente: "en attente",
   accepte: "accepté",
   refuse: "refusé",
@@ -39,4 +40,13 @@ export function lireEtatsLignesDevis(v: unknown): Map<string, EtatLigneDevis> {
     });
   }
   return m;
+}
+
+/** Date d'un devis au format court (jj/mm/aaaa, heure de Paris) ; vide si illisible. */
+export function dateDevis(v: unknown): string {
+  if (typeof v !== "string" || !v) return "";
+  const d = new Date(v);
+  return Number.isNaN(d.getTime())
+    ? ""
+    : d.toLocaleDateString("fr-FR", { timeZone: "Europe/Paris" });
 }

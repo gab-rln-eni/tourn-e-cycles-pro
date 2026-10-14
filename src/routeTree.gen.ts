@@ -27,6 +27,7 @@ import { Route as ApiPublicFactureResumeV4RouteImport } from './routes/api/publi
 import { Route as ApiPublicRappelCommandesRouteImport } from './routes/api/public/rappel-commandes'
 import { Route as ApiPublicRappelCommandesV4RouteImport } from './routes/api/public/rappel-commandes-v4'
 import { Route as ApiPublicStockAxonautRouteImport } from './routes/api/public/stock-axonaut'
+import { Route as ApiPublicV4VerrouRouteImport } from './routes/api/public/v4-verrou'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -125,6 +126,11 @@ const ApiPublicStockAxonautRoute = ApiPublicStockAxonautRouteImport.update({
   path: '/api/public/stock-axonaut',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicV4VerrouRoute = ApiPublicV4VerrouRouteImport.update({
+  id: '/api/public/v4-verrou',
+  path: '/api/public/v4-verrou',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -145,6 +151,7 @@ export interface FileRoutesByFullPath {
   '/api/public/rappel-commandes': typeof ApiPublicRappelCommandesRoute
   '/api/public/rappel-commandes-v4': typeof ApiPublicRappelCommandesV4Route
   '/api/public/stock-axonaut': typeof ApiPublicStockAxonautRoute
+  '/api/public/v4-verrou': typeof ApiPublicV4VerrouRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -165,6 +172,7 @@ export interface FileRoutesByTo {
   '/api/public/rappel-commandes': typeof ApiPublicRappelCommandesRoute
   '/api/public/rappel-commandes-v4': typeof ApiPublicRappelCommandesV4Route
   '/api/public/stock-axonaut': typeof ApiPublicStockAxonautRoute
+  '/api/public/v4-verrou': typeof ApiPublicV4VerrouRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -186,6 +194,7 @@ export interface FileRoutesById {
   '/api/public/rappel-commandes': typeof ApiPublicRappelCommandesRoute
   '/api/public/rappel-commandes-v4': typeof ApiPublicRappelCommandesV4Route
   '/api/public/stock-axonaut': typeof ApiPublicStockAxonautRoute
+  '/api/public/v4-verrou': typeof ApiPublicV4VerrouRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -208,6 +217,7 @@ export interface FileRouteTypes {
     | '/api/public/rappel-commandes'
     | '/api/public/rappel-commandes-v4'
     | '/api/public/stock-axonaut'
+    | '/api/public/v4-verrou'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -228,6 +238,7 @@ export interface FileRouteTypes {
     | '/api/public/rappel-commandes'
     | '/api/public/rappel-commandes-v4'
     | '/api/public/stock-axonaut'
+    | '/api/public/v4-verrou'
   id:
     | '__root__'
     | '/'
@@ -248,6 +259,7 @@ export interface FileRouteTypes {
     | '/api/public/rappel-commandes'
     | '/api/public/rappel-commandes-v4'
     | '/api/public/stock-axonaut'
+    | '/api/public/v4-verrou'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -269,6 +281,7 @@ export interface RootRouteChildren {
   ApiPublicRappelCommandesRoute: typeof ApiPublicRappelCommandesRoute
   ApiPublicRappelCommandesV4Route: typeof ApiPublicRappelCommandesV4Route
   ApiPublicStockAxonautRoute: typeof ApiPublicStockAxonautRoute
+  ApiPublicV4VerrouRoute: typeof ApiPublicV4VerrouRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -399,6 +412,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicStockAxonautRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/v4-verrou': {
+      id: '/api/public/v4-verrou'
+      path: '/api/public/v4-verrou'
+      fullPath: '/api/public/v4-verrou'
+      preLoaderRoute: typeof ApiPublicV4VerrouRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -421,6 +441,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicRappelCommandesRoute: ApiPublicRappelCommandesRoute,
   ApiPublicRappelCommandesV4Route: ApiPublicRappelCommandesV4Route,
   ApiPublicStockAxonautRoute: ApiPublicStockAxonautRoute,
+  ApiPublicV4VerrouRoute: ApiPublicV4VerrouRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

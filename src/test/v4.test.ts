@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { lireDemandeId } from "@/lib/v4.server";
-import { ETAT_DEVIS_PIECE, lireEtatStock, lireEtatsLignesDevis } from "@/lib/commandes";
+import { lireDemandeId, lireVerrou } from "@/lib/v4.server";
+import { ETAT_DEVIS_PIECE, dateDevis, lireEtatStock, lireEtatsLignesDevis } from "@/lib/commandes";
 
 // Chantier V4 (agent V4, 2026-10-14) : corps de la route facture-resume-v4, état des lignes de devis dans la liste « À commander ».
 const ID = "a2000000-0000-0000-0000-000000000001";
@@ -47,5 +47,34 @@ describe("liste À commander : lignes de devis", () => {
     expect(lireEtatStock("en_stock")).toBe("en_stock");
     expect(lireEtatStock(null)).toBe("inconnu");
     expect(lireEtatStock("bizarre")).toBe("inconnu");
+  });
+});
+
+describe("route v4-verrou : corps strict", () => {
+  it("nominal : vrai ou faux", () => {
+    expect(lireVerrou('{"faite": true}')).toBe(true);
+    expect(lireVerrou('{"faite": false}')).toBe(false);
+  });
+  it("vide : corps absent ou objet vide refusé", () => {
+    expect(lireVerrou("")).toBeNull();
+    expect(lireVerrou("{}")).toBeNull();
+  });
+  it("erreur : autre type, clé en plus, autre table, tableau", () => {
+    expect(lireVerrou('{"faite": "true"}')).toBeNull();
+    expect(lireVerrou('{"faite": 1}')).toBeNull();
+    expect(lireVerrou('{"faite": true, "table": "stock_bascule"}')).toBeNull();
+    expect(lireVerrou('[{"faite": true}]')).toBeNull();
+    expect(lireVerrou("{faite")).toBeNull();
+  });
+});
+
+describe("liste À commander : brouillons (décision 4)", () => {
+  it("nominal : libellé et date du devis", () => {
+    expect(ETAT_DEVIS_PIECE["brouillon"]).toBe("brouillon, non envoyé");
+    expect(dateDevis("2026-10-14T20:30:00Z")).toBe("14/10/2026");
+  });
+  it("vide et erreur : date absente ou illisible", () => {
+    expect(dateDevis(null)).toBe("");
+    expect(dateDevis("pas une date")).toBe("");
   });
 });

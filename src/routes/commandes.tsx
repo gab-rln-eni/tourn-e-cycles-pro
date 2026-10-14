@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { requireRoles } from "@/lib/auth";
 import { dateHeure, dateLongue, messageErreur, quantiteFr } from "@/lib/format";
 import { Label } from "@/components/ui/label";
-import { ETAT_DEVIS_PIECE, lireEtatStock } from "@/lib/commandes";
+import { ETAT_DEVIS_PIECE, dateDevis, lireEtatStock } from "@/lib/commandes";
 import { libelleStock } from "@/lib/stock";
 
 // Lot L1 : pièces marquées « à commander » sur les fiches terminées, par journée, avec la case « commandée ».
@@ -50,6 +50,7 @@ type Piece = {
   etat_devis: string | null;
   etat_stock: string | null;
   modifie_le: string | null;
+  devis_date?: string | null;
 };
 
 function Commandes() {
@@ -245,6 +246,7 @@ function LigneDevisACommander({
           </span>
           <span className="block text-sm">
             Devis {p.devis_reference}, {ETAT_DEVIS_PIECE[p.etat_devis ?? ""] ?? "en attente"}
+            {dateDevis(p.devis_date) ? `, du ${dateDevis(p.devis_date)}` : ""}
             {p.fiche_reference ? `, fiche ${p.fiche_reference}` : ""}, {p.client}
           </span>
           <span className="block text-sm font-bold">

@@ -108,8 +108,8 @@ select pg_temp.verifier((select doublon from public.commandes_devis_source() whe
   'doublon fiche : pièce déjà dans la liste L1 pour le même vélo');
 select pg_temp.verifier((select etat_stock from public.commandes_devis_source() where devis_ligne_id = '01000000-0000-0000-0000-000000000113') = 'inconnu',
   'pièce non reliée à Axonaut : stock inconnu');
-select pg_temp.verifier((select etat_devis from public.commandes_devis_source() where devis_ligne_id = '01000000-0000-0000-0000-000000000411') = 'en_attente',
-  'brouillon : en attente');
+select pg_temp.verifier((select etat_devis from public.commandes_devis_source() where devis_ligne_id = '01000000-0000-0000-0000-000000000411') = 'brouillon',
+  'brouillon : état brouillon (0011)');
 
 -- 3. Écran (atelier) : journée du 16/10, une ligne par pièce et par vélo ; refus pour anon et mécanicien
 set role anon; reset request.jwt.claim.sub;
@@ -294,5 +294,66 @@ select pg_temp.verifier(:'vide_type'::boolean and :'vide_inconnue'::boolean, 'r�
 set role authenticated; set request.jwt.claim.sub = '00000000-0000-0000-0000-00000000000e';
 select pg_temp.verifier(public.v4_bascule_etat() = false, 'verrou lu : fermé');
 reset role;
+
+
+-- 9. Brouillons (0011, décision 4 de G_R) : écran avec l'état « brouillon » et la date du devis, d'après les lignes actuelles ;
+--    rappel : brouillons créés le jour même seulement ; brouillons anciens visibles sans rappel ; a_relire = brouillon
+insert into public.evenements(id, entreprise_id, site, date_intervention)
+  select 'b0000000-0000-0000-0000-0000000000b1', id, 'Site V4 brouillons', current_date + 5 from public.entreprises order by created_at limit 1;
+insert into public.inscriptions(id, evenement_id, nom, prenom, telephone, email, code_postal, type_velo, partie_signalee, consentement_le) values
+  ('c0000000-0000-0000-0000-0000000000b1', 'b0000000-0000-0000-0000-0000000000b1', 'Brouillon', 'Jour', '0600000000', 'bj@example.com', '69007', 'vae', 'freins', now()),
+  ('c0000000-0000-0000-0000-0000000000b2', 'b0000000-0000-0000-0000-0000000000b1', 'Brouillon', 'Ancien', '0600000000', 'ba@example.com', '69007', 'vae', 'freins', now()),
+  ('c0000000-0000-0000-0000-0000000000b3', 'b0000000-0000-0000-0000-0000000000b1', 'Relire', 'Jour', '0600000000', 'rj@example.com', '69007', 'vae', 'freins', now());
+insert into public.fiches(id, inscription_id, statut) values
+  ('d0000000-0000-0000-0000-0000000000b1', 'c0000000-0000-0000-0000-0000000000b1', 'en_cours'),
+  ('d0000000-0000-0000-0000-0000000000b2', 'c0000000-0000-0000-0000-0000000000b2', 'en_cours'),
+  ('d0000000-0000-0000-0000-0000000000b3', 'c0000000-0000-0000-0000-0000000000b3', 'en_cours');
+update public.v4_bascule set mise_en_service = now() - interval '3 days';   -- base jetable du banc seulement
+insert into public.devis(id, fiche_id, reference, statut, created_at) values
+  ('f0000000-0000-0000-0000-0000000000b1', 'd0000000-0000-0000-0000-0000000000b1', 'DV-V4B-JOUR', 'brouillon', now()),
+  ('f0000000-0000-0000-0000-0000000000b2', 'd0000000-0000-0000-0000-0000000000b2', 'DV-V4B-ANCIEN', 'brouillon', now() - interval '2 days'),
+  ('f0000000-0000-0000-0000-0000000000b3', 'd0000000-0000-0000-0000-0000000000b3', 'DV-V4B-RELIRE', 'a_relire', now());
+insert into public.devis_lignes(id, devis_id, piece_id, libelle, quantite, prix_unitaire_ht) values
+  ('01000000-0000-0000-0000-0000000000b1', 'f0000000-0000-0000-0000-0000000000b1', 'a0000000-0000-0000-0000-0000000000a1', 'Gaine V4 a commander', 1, 3),
+  ('01000000-0000-0000-0000-0000000000b4', 'f0000000-0000-0000-0000-0000000000b1', 'a0000000-0000-0000-0000-0000000000a3', 'Chambre V4 inconnue', 1, 7),
+  ('01000000-0000-0000-0000-0000000000b2', 'f0000000-0000-0000-0000-0000000000b2', 'a0000000-0000-0000-0000-0000000000a1', 'Gaine V4 a commander', 1, 3),
+  ('01000000-0000-0000-0000-0000000000b3', 'f0000000-0000-0000-0000-0000000000b3', 'a0000000-0000-0000-0000-0000000000a3', 'Chambre V4 inconnue', 1, 7);
+update public.devis_lignes set created_at = now() - interval '2 days' where id = '01000000-0000-0000-0000-0000000000b2';
+set role authenticated; set request.jwt.claim.sub = '00000000-0000-0000-0000-00000000000a';
+select public.commandes_v4_journee('b0000000-0000-0000-0000-0000000000b1') as jb \gset
+reset role;
+select pg_temp.verifier(jsonb_array_length(:'jb'::jsonb) = 4, 'brouillons : 4 lignes à l''écran (jour, ancien, à relire)');
+select pg_temp.verifier((select bool_and(e->>'etat_devis' = 'brouillon' and e->>'devis_date' is not null) from jsonb_array_elements(:'jb'::jsonb) e),
+  'brouillons : état brouillon et date du devis');
+select pg_temp.verifier(exists (select 1 from jsonb_array_elements(:'jb'::jsonb) e where e->>'devis_reference' = 'DV-V4B-ANCIEN'), 'brouillon ancien : visible à l''écran');
+set role service_role;
+select public.rappel_commandes_reserver_v4(false) as rb \gset
+reset role;
+select pg_temp.verifier(case when extract(isodow from (now() at time zone 'Europe/Paris')) <= 5 then
+    (select count(*) from jsonb_array_elements(:'rb'::jsonb->'pieces') e where e->>'devis_reference' like 'DV-V4B-%') = 3
+    and not exists (select 1 from jsonb_array_elements(:'rb'::jsonb->'pieces') e where e->>'devis_reference' = 'DV-V4B-ANCIEN')
+  else true end, 'rappel : brouillons du jour (2 lignes) et à relire du jour (1), jamais le brouillon ancien');
+delete from public.rappels_commandes;
+-- une pièce enlevée du brouillon disparaît de la liste (lignes actuelles)
+delete from public.devis_lignes where id = '01000000-0000-0000-0000-0000000000b4';   -- geste permis à l'app sur un brouillon (base jetable)
+set role authenticated; set request.jwt.claim.sub = '00000000-0000-0000-0000-00000000000a';
+select pg_temp.verifier(jsonb_array_length(public.commandes_v4_journee('b0000000-0000-0000-0000-0000000000b1')) = 3, 'pièce enlevée du brouillon : sortie de la liste');
+reset role;
+-- le mécanicien retire une pièce de brouillon par la case : elle sort du rappel
+set role authenticated; set request.jwt.claim.sub = '00000000-0000-0000-0000-00000000000e';
+select pg_temp.verifier((public.devis_piece_retirer('01000000-0000-0000-0000-0000000000b1', true)->>'retiree')::boolean, 'mécanicien retire une pièce de brouillon');
+reset role;
+set role service_role;
+select pg_temp.verifier(case when extract(isodow from (now() at time zone 'Europe/Paris')) <= 5 then
+    not exists (select 1 from jsonb_array_elements(public.rappel_commandes_reserver_v4(false)->'pieces') e where e->>'devis_reference' = 'DV-V4B-JOUR')
+  else true end, 'pièce retirée du brouillon : plus rappelée');
+reset role;
+delete from public.rappels_commandes;
+-- priorité anti-doublon : un devis envoyé l'emporte sur un brouillon de la même fiche
+insert into public.devis(id, fiche_id, reference, statut) values ('f0000000-0000-0000-0000-0000000000b9', 'd0000000-0000-0000-0000-0000000000b2', 'DV-V4B-ENVOYE', 'envoye');
+insert into public.devis_lignes(id, devis_id, piece_id, libelle, quantite) values ('01000000-0000-0000-0000-0000000000b9', 'f0000000-0000-0000-0000-0000000000b9', 'a0000000-0000-0000-0000-0000000000a1', 'Gaine V4 a commander', 1);
+select pg_temp.verifier((select doublon from public.commandes_devis_source() where devis_ligne_id = '01000000-0000-0000-0000-0000000000b2') = 'devis'
+  and (select doublon from public.commandes_devis_source() where devis_ligne_id = '01000000-0000-0000-0000-0000000000b9') is null,
+  'anti-doublon : le devis envoyé l''emporte sur le brouillon');
 
 \echo BANC V4 : TOUTES LES ASSERTIONS PASSENT

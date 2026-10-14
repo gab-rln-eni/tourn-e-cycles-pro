@@ -584,6 +584,12 @@ export type Database = {
           },
         ]
       }
+      v4_bascule: {
+        Row: { id: boolean; faite: boolean; mise_en_service: string; modifie_le: string }
+        Insert: { id?: boolean; faite?: boolean; mise_en_service?: string; modifie_le?: string }
+        Update: { id?: boolean; faite?: boolean; mise_en_service?: string; modifie_le?: string }
+        Relationships: []
+      }
     }
     Views: {
       stats_entreprises: {

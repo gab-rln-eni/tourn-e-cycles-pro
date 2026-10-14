@@ -4,6 +4,9 @@
 //     corps facultatif { essai: true } : pièces LOTS-TEST seulement, sans réserver le jour.
 //   POST /api/public/facture-resume-v4 : résumé d'une facture « prête à valider » pour le mail au dirigeant (TC_14),
 //     corps { demande_id } (demande de type controle).
+//   POST /api/public/v4-verrou : verrou d'affichage V4 sans l'outil SQL (visa G_R, point 3) ; corps STRICT { faite: true | false }
+//     (tout autre corps : 400) ; écrit UNIQUEMENT public.v4_bascule (table et colonnes en dur, ligne unique), puis renvoie la valeur relue.
+//     Appelée seulement par les workflows figés TC_V4_Verrou_lever_v1 et TC_V4_Verrou_rabaisser_v1. Jamais stock_bascule.
 // Les routes existantes ne changent pas.
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { lireEssai } from "@/lib/commandes.server";
@@ -55,4 +58,48 @@ export async function traiterFactureResumeV4(request: Request): Promise<Response
   }
   if (!data) return json({ ok: false, erreur: "demande introuvable ou d'un autre type" }, 404);
   return json({ ok: true, facture: data });
+}
+
+/** Lit le corps strict { faite: booléen } ; toute autre forme (clé en plus, valeur non booléenne) : null. */
+export function lireVerrou(texte: string): boolean | null {
+  try {
+    const c = JSON.parse(texte) as unknown;
+    if (!c || typeof c !== "object" || Array.isArray(c)) return null;
+    const cles = Object.keys(c);
+    if (cles.length !== 1 || cles[0] !== "faite") return null;
+    const f = (c as { faite?: unknown }).faite;
+    return typeof f === "boolean" ? f : null;
+  } catch {
+    return null;
+  }
+}
+
+export async function traiterVerrouV4(request: Request): Promise<Response> {
+  const refus = refuserSansSecret(request, process.env["TC_SECRET"]);
+  if (refus) return refus;
+  const faite = lireVerrou(await request.text().catch(() => ""));
+  if (faite === null)
+    return json({ ok: false, erreur: "objet attendu : { faite: true | false }" }, 400);
+  const ecrit = await supabaseAdmin
+    .from("v4_bascule")
+    .update({ faite, modifie_le: new Date().toISOString() })
+    .eq("id", true);
+  if (ecrit.error) {
+    console.error("[v4] verrou écriture", ecrit.error.message);
+    return json({ ok: false, erreur: "écriture impossible" }, 500);
+  }
+  const relu = await supabaseAdmin
+    .from("v4_bascule")
+    .select("faite, modifie_le")
+    .eq("id", true)
+    .maybeSingle();
+  if (relu.error || !relu.data) {
+    console.error("[v4] verrou relecture", relu.error?.message ?? "ligne absente");
+    return json({ ok: false, erreur: "relecture impossible" }, 500);
+  }
+  return json({
+    ok: relu.data.faite === faite,
+    faite: relu.data.faite,
+    modifie_le: relu.data.modifie_le,
+  });
 }
