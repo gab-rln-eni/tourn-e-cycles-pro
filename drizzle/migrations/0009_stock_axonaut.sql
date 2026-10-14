@@ -6,7 +6,8 @@
 --     LIMITE : facture_lignes n'a pas de piece_id ; une ligne de catalogue dont le libellé a été retouché tombe sur le générique.
 --   donnees_demande_v2 : même contrat que donnees_demande, plus axonaut_produit_id dans chaque ligne de 'envoi' (les autres types sont inchangés).
 --   reserver_demandes_v2 : copie de reserver_demandes qui lit donnees_demande_v2. ATTENTION : réserve dans la même table que le chemin
---     actuel ; jamais appelée en base réelle avant la bascule (premier appel réel : TC_00 v3 publié).
+--     actuel ; VERROU : refuse (exception) tant que stock_bascule.faite est faux ; la bascule le lève, le retour le rabaisse.
+--   stock_bascule : une seule ligne, faite = faux à la création.
 --   catalogue_axonaut_liste, stock_axonaut_ecrire : routes de n8n (service_role seulement).
 --   stock_pieces : lecture du stock par l'écran du devis (SECURITY DEFINER, rôles de l'atelier).
 -- Aucune clé étrangère ni déclencheur ; RLS active ; REVOKE public, anon, authenticated puis droits nécessaires seulement.
@@ -31,6 +32,17 @@ create table if not exists public.stock_axonaut (
   stock numeric(12,3),
   lu_le timestamptz not null default now()
 );
+
+create table if not exists public.stock_bascule (
+  id boolean primary key default true check (id),
+  faite boolean not null default false,
+  modifie_le timestamptz not null default now()
+);
+insert into public.stock_bascule (id) values (true) on conflict (id) do nothing;
+
+alter table public.stock_bascule enable row level security;
+revoke all on table public.stock_bascule from public, anon, authenticated;
+grant all on table public.stock_bascule to service_role;
 
 alter table public.catalogue_axonaut enable row level security;
 alter table public.stock_axonaut enable row level security;
@@ -65,7 +77,10 @@ create or replace function public.reserver_demandes_v2(p_limite integer default 
 returns jsonb language plpgsql security definer set search_path = public as $$
 declare v_res jsonb := '[]'::jsonb; r record;
 begin
-  -- Copie de reserver_demandes (migration 0002), seule différence : donnees_demande_v2.
+  -- Copie de reserver_demandes (migration 0002) ; différences : verrou de bascule, donnees_demande_v2.
+  if not coalesce((select b.faite from public.stock_bascule b where b.id), false) then
+    raise exception 'Bascule STOCK non faite : réservation v2 refusée.';
+  end if;
   update public.demandes_automatisation
     set statut = case when tentatives >= 3 then 'echec' else 'a_faire' end,
         derniere_erreur = case when tentatives >= 3 then 'Délai dépassé après 3 tentatives.' else derniere_erreur end,
@@ -108,7 +123,7 @@ create or replace function public.stock_axonaut_ecrire(p jsonb)
 returns jsonb language plpgsql security definer set search_path = public as $$
 declare n integer := 0; ignores integer := 0; e jsonb;
 begin
-  if jsonb_typeof(p->'stocks') <> 'array' then
+  if coalesce(jsonb_typeof(p->'stocks'), '') <> 'array' then
     return jsonb_build_object('ok', false, 'erreur', 'stocks attendu (tableau)');
   end if;
   for e in select * from jsonb_array_elements(p->'stocks') loop
@@ -156,4 +171,5 @@ grant execute on function public.stock_pieces() to authenticated;
 -- drop function if exists public.donnees_demande_v2(text, uuid);
 -- drop function if exists public.axonaut_produit_ligne(text);
 -- drop table if exists public.stock_axonaut;
+-- drop table if exists public.stock_bascule;
 -- drop table if exists public.catalogue_axonaut;

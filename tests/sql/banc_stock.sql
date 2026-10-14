@@ -14,13 +14,13 @@ grant execute on function pg_temp.verifier(boolean, text), pg_temp.refuse(text, 
 
 -- 0. Structure : aucune clé étrangère, aucun déclencheur, RLS active, aucun droit direct pour anon et authenticated
 select pg_temp.verifier((select count(*) from pg_constraint where contype = 'f'
-  and conrelid in ('public.catalogue_axonaut'::regclass, 'public.stock_axonaut'::regclass)) = 0, 'aucune clé étrangère');
+  and conrelid in ('public.catalogue_axonaut'::regclass, 'public.stock_axonaut'::regclass, 'public.stock_bascule'::regclass)) = 0, 'aucune clé étrangère');
 select pg_temp.verifier((select count(*) from pg_trigger where not tgisinternal
   and tgrelid in ('public.catalogue_axonaut'::regclass, 'public.stock_axonaut'::regclass)) = 0, 'aucun déclencheur');
 select pg_temp.verifier((select bool_and(relrowsecurity) from pg_class where oid in
-  ('public.catalogue_axonaut'::regclass, 'public.stock_axonaut'::regclass)), 'RLS active');
+  ('public.catalogue_axonaut'::regclass, 'public.stock_axonaut'::regclass, 'public.stock_bascule'::regclass)), 'RLS active');
 select pg_temp.verifier(not has_table_privilege(r, t, 'select,insert,update,delete'), format('%s sans droit sur %s', r, t))
-  from unnest(array['anon','authenticated']) r, unnest(array['public.catalogue_axonaut','public.stock_axonaut']) t;
+  from unnest(array['anon','authenticated']) r, unnest(array['public.catalogue_axonaut','public.stock_axonaut','public.stock_bascule']) t;
 select pg_temp.verifier(not has_function_privilege(r, f, 'execute'), format('%s sans EXECUTE %s', r, f))
   from unnest(array['anon','authenticated']) r,
        unnest(array['public.axonaut_produit_ligne(text)','public.donnees_demande_v2(text,uuid)','public.reserver_demandes_v2(integer)',
@@ -65,6 +65,13 @@ reset role;
 --    (chaque appel dans une transaction annulée ; demandes « a_faire » neuves : un envoi et un client)
 select i.id as ins from public.inscriptions i order by created_at limit 1 \gset
 insert into public.demandes_automatisation (type, objet_id) values ('envoi', :'fa_validee'), ('client', :'ins');
+-- Verrou : bascule non faite, réservation v2 refusée, aucune demande touchée
+set role service_role;
+select pg_temp.verifier((select count(*) = 1 and bool_and(not faite) from public.stock_bascule), 'verrou : une ligne, bascule non faite');
+select pg_temp.verifier(pg_temp.refuse('select public.reserver_demandes_v2(10)', 'Bascule STOCK non faite'), 'verrou : réservation v2 refusée');
+select pg_temp.verifier((select count(*) from public.demandes_automatisation where statut = 'a_faire') = 2, 'verrou : demandes intactes');
+update public.stock_bascule set faite = true;
+reset role;
 begin;
 set local role service_role;
 select public.reserver_demandes(10)::text as r1 \gset
@@ -88,6 +95,7 @@ update public.demandes_automatisation set statut = 'echec', derniere_erreur = 'b
 -- 5. Écriture du stock (TC_33) et lecture par l'écran
 set role service_role;
 select pg_temp.verifier((public.stock_axonaut_ecrire('{"stocks": 3}'::jsonb)->>'ok')::boolean = false, 'corps invalide refusé');
+select pg_temp.verifier((public.stock_axonaut_ecrire('{}'::jsonb)->>'ok')::boolean = false, 'corps sans stocks refusé');
 select pg_temp.verifier(public.stock_axonaut_ecrire('{"stocks": [{"axonaut_produit_id": "1001", "stock": 3}, {"axonaut_produit_id": "1002", "stock": 9},
   {"axonaut_produit_id": "9999", "stock": 1}, {"axonaut_produit_id": "1001", "stock": "x"}]}'::jsonb) = '{"ok": true, "ecrits": 1, "ignores": 3}'::jsonb, 'seul le produit suivi est écrit');
 select pg_temp.verifier(public.stock_axonaut_ecrire('{"stocks": []}'::jsonb) = '{"ok": true, "ecrits": 0, "ignores": 0}'::jsonb, 'liste vide : rien écrit');
