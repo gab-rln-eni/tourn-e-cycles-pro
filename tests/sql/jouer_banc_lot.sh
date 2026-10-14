@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Banc d'un lot (agent LOTS, 2026-10-14) : non-régression des fonctions existantes, puis assertions du lot.
-# Passe A : bouchon, migrations 0000 à 0004, bancs existants (liaison et devis : inscrire, terminer_fiche, preparer_facture,
+# Passe A : bouchon, migrations qui précèdent celle du lot, bancs existants (liaison et devis : inscrire, terminer_fiche, preparer_facture,
 #           controler_facture, valider_facture, donnees_demande par reserver_demandes, fonctions devis_*), photo des tables existantes.
 # Passe B : même chose avec la migration du lot appliquée DEUX fois (idempotence) avant les bancs existants.
 # Les sorties A et B, normalisées (identifiants, heures, codes et jetons aléatoires), doivent être identiques ; sinon échec.
@@ -9,6 +9,8 @@ set -euo pipefail
 H="$1"; PORT="$2"; U="$3"; LOT="$4"; BANC="$5"; SORTIE="$6"
 RACINE="$(cd "$(dirname "$0")/../.." && pwd)"
 mkdir -p "$SORTIE"
+# Migrations de base : toutes celles du dépôt qui précèdent la migration du lot (0000 à 0004 pour L1, 0000 à 0005 pour L2, etc.)
+BASE=(); for f in "$RACINE"/drizzle/migrations/0*.sql; do [[ "$(basename "$f")" < "$(basename "$LOT")" ]] && BASE+=("$f"); done
 P() { psql -h "$H" -p "$PORT" -U "$U" "$@"; }
 
 normaliser() {
@@ -24,7 +26,7 @@ TABLES="acces entreprises evenements inscriptions fiches fiche_points pieces_cat
 passe() { # $1 = A ou B
   P -d postgres -qc "drop database if exists banc_lot" -c "create database banc_lot"
   P -d banc_lot -q -v ON_ERROR_STOP=1 -f "$RACINE/tests/sql/bouchon_supabase.sql" >/dev/null
-  for f in "$RACINE"/drizzle/migrations/000[0-4]_*.sql; do P -d banc_lot -q -v ON_ERROR_STOP=1 -f "$f" >/dev/null; done
+  for f in "${BASE[@]}"; do P -d banc_lot -q -v ON_ERROR_STOP=1 -f "$f" >/dev/null; done
   if [ "$1" = B ]; then
     P -d banc_lot -q -v ON_ERROR_STOP=1 -f "$LOT" >/dev/null
     P -d banc_lot -q -v ON_ERROR_STOP=1 -f "$LOT" >/dev/null   # idempotence
@@ -32,6 +34,7 @@ passe() { # $1 = A ou B
   {
     P -d banc_lot -f "$RACINE/tests/sql/banc_liaison.sql" 2>&1
     P -d banc_lot -f "$RACINE/tests/sql/banc_devis.sql" 2>&1
+    for x in ${REJEU_EXTRA:-}; do P -d banc_lot -f "$RACINE/$x" 2>&1; done   # bancs des lots déjà publiés (ex. tests/sql/banc_lot_l1.sql)
     for t in $TABLES; do
       echo "== table $t"
       P -d banc_lot -Atc "select count(*) from public.$t"
@@ -53,7 +56,7 @@ grep -q "BANC DEVIS : TOUTES LES ASSERTIONS PASSENT" "$SORTIE/rejeu_B.txt" || { 
 EMP="$RACINE/tests/sql/empreinte_schema.sql"
 P -d postgres -qc "drop database if exists banc_emp" -c "create database banc_emp"
 P -d banc_emp -q -v ON_ERROR_STOP=1 -f "$RACINE/tests/sql/bouchon_supabase.sql" >/dev/null
-for f in "$RACINE"/drizzle/migrations/000[0-4]_*.sql; do P -d banc_emp -q -v ON_ERROR_STOP=1 -f "$f" >/dev/null; done
+for f in "${BASE[@]}"; do P -d banc_emp -q -v ON_ERROR_STOP=1 -f "$f" >/dev/null; done
 P -d banc_emp -Atf "$EMP" > "$SORTIE/empreinte_avant.txt"
 P -d banc_emp -q -v ON_ERROR_STOP=1 -f "$LOT" >/dev/null
 P -d banc_emp -Atf "$EMP" > "$SORTIE/empreinte_apres.txt"

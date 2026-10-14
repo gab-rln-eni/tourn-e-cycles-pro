@@ -53,6 +53,11 @@ export function SiteHeader() {
                 À commander
               </Link>
             )}
+            {roles.includes("dirigeant") && (
+              <Link to="/statistiques" className={lien}>
+                Statistiques
+              </Link>
+            )}
             <DropdownMenu>
               <DropdownMenuTrigger
                 className="tap inline-flex items-center justify-center rounded-lg hover:bg-muted"

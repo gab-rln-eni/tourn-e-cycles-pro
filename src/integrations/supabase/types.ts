@@ -586,7 +586,18 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      stats_entreprises: {
+        Row: {
+          entreprise_id: string
+          entreprise: string
+          site: string
+          date_intervention: string
+          genre: string
+          libelle: string
+          quantite: number
+        }
+        Relationships: []
+      }
     }
     Functions: {
       code_court: { Args: never; Returns: string }

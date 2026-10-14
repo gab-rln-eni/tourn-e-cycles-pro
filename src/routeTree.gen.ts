@@ -15,6 +15,7 @@ import { Route as BureauRouteImport } from './routes/bureau'
 import { Route as CommandesRouteImport } from './routes/commandes'
 import { Route as InscriptionRouteImport } from './routes/inscription'
 import { Route as JourneeRouteImport } from './routes/journee'
+import { Route as StatistiquesRouteImport } from './routes/statistiques'
 import { Route as DevisJetonRouteImport } from './routes/devis.$jeton'
 import { Route as FicheInscriptionIdRouteImport } from './routes/fiche.$inscriptionId'
 import { Route as ApiPublicDemandeResultatRouteImport } from './routes/api/public/demande-resultat'
@@ -49,6 +50,11 @@ const InscriptionRoute = InscriptionRouteImport.update({
 const JourneeRoute = JourneeRouteImport.update({
   id: '/journee',
   path: '/journee',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StatistiquesRoute = StatistiquesRouteImport.update({
+  id: '/statistiques',
+  path: '/statistiques',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DevisJetonRoute = DevisJetonRouteImport.update({
@@ -87,6 +93,7 @@ export interface FileRoutesByFullPath {
   '/commandes': typeof CommandesRoute
   '/inscription': typeof InscriptionRoute
   '/journee': typeof JourneeRoute
+  '/statistiques': typeof StatistiquesRoute
   '/devis/$jeton': typeof DevisJetonRoute
   '/fiche/$inscriptionId': typeof FicheInscriptionIdRoute
   '/api/public/demande-resultat': typeof ApiPublicDemandeResultatRoute
@@ -100,6 +107,7 @@ export interface FileRoutesByTo {
   '/commandes': typeof CommandesRoute
   '/inscription': typeof InscriptionRoute
   '/journee': typeof JourneeRoute
+  '/statistiques': typeof StatistiquesRoute
   '/devis/$jeton': typeof DevisJetonRoute
   '/fiche/$inscriptionId': typeof FicheInscriptionIdRoute
   '/api/public/demande-resultat': typeof ApiPublicDemandeResultatRoute
@@ -114,6 +122,7 @@ export interface FileRoutesById {
   '/commandes': typeof CommandesRoute
   '/inscription': typeof InscriptionRoute
   '/journee': typeof JourneeRoute
+  '/statistiques': typeof StatistiquesRoute
   '/devis/$jeton': typeof DevisJetonRoute
   '/fiche/$inscriptionId': typeof FicheInscriptionIdRoute
   '/api/public/demande-resultat': typeof ApiPublicDemandeResultatRoute
@@ -129,6 +138,7 @@ export interface FileRouteTypes {
     | '/commandes'
     | '/inscription'
     | '/journee'
+    | '/statistiques'
     | '/devis/$jeton'
     | '/fiche/$inscriptionId'
     | '/api/public/demande-resultat'
@@ -142,6 +152,7 @@ export interface FileRouteTypes {
     | '/commandes'
     | '/inscription'
     | '/journee'
+    | '/statistiques'
     | '/devis/$jeton'
     | '/fiche/$inscriptionId'
     | '/api/public/demande-resultat'
@@ -155,6 +166,7 @@ export interface FileRouteTypes {
     | '/commandes'
     | '/inscription'
     | '/journee'
+    | '/statistiques'
     | '/devis/$jeton'
     | '/fiche/$inscriptionId'
     | '/api/public/demande-resultat'
@@ -169,6 +181,7 @@ export interface RootRouteChildren {
   CommandesRoute: typeof CommandesRoute
   InscriptionRoute: typeof InscriptionRoute
   JourneeRoute: typeof JourneeRoute
+  StatistiquesRoute: typeof StatistiquesRoute
   DevisJetonRoute: typeof DevisJetonRoute
   FicheInscriptionIdRoute: typeof FicheInscriptionIdRoute
   ApiPublicDemandeResultatRoute: typeof ApiPublicDemandeResultatRoute
@@ -220,6 +233,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof JourneeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/statistiques': {
+      id: '/statistiques'
+      path: '/statistiques'
+      fullPath: '/statistiques'
+      preLoaderRoute: typeof StatistiquesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/devis/$jeton': {
       id: '/devis/$jeton'
       path: '/devis/$jeton'
@@ -265,6 +285,7 @@ const rootRouteChildren: RootRouteChildren = {
   CommandesRoute: CommandesRoute,
   InscriptionRoute: InscriptionRoute,
   JourneeRoute: JourneeRoute,
+  StatistiquesRoute: StatistiquesRoute,
   DevisJetonRoute: DevisJetonRoute,
   FicheInscriptionIdRoute: FicheInscriptionIdRoute,
   ApiPublicDemandeResultatRoute: ApiPublicDemandeResultatRoute,
