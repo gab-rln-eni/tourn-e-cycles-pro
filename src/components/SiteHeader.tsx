@@ -48,6 +48,11 @@ export function SiteHeader() {
                 Bureau
               </Link>
             )}
+            {voitBureau && (
+              <Link to="/commandes" className={lien}>
+                À commander
+              </Link>
+            )}
             <DropdownMenu>
               <DropdownMenuTrigger
                 className="tap inline-flex items-center justify-center rounded-lg hover:bg-muted"

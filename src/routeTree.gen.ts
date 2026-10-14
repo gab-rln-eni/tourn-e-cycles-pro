@@ -12,12 +12,14 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SplatRouteImport } from './routes/$'
 import { Route as BureauRouteImport } from './routes/bureau'
+import { Route as CommandesRouteImport } from './routes/commandes'
 import { Route as InscriptionRouteImport } from './routes/inscription'
 import { Route as JourneeRouteImport } from './routes/journee'
 import { Route as DevisJetonRouteImport } from './routes/devis.$jeton'
 import { Route as FicheInscriptionIdRouteImport } from './routes/fiche.$inscriptionId'
 import { Route as ApiPublicDemandeResultatRouteImport } from './routes/api/public/demande-resultat'
 import { Route as ApiPublicDemandesATraiterRouteImport } from './routes/api/public/demandes-a-traiter'
+import { Route as ApiPublicRappelCommandesRouteImport } from './routes/api/public/rappel-commandes'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -32,6 +34,11 @@ const SplatRoute = SplatRouteImport.update({
 const BureauRoute = BureauRouteImport.update({
   id: '/bureau',
   path: '/bureau',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CommandesRoute = CommandesRouteImport.update({
+  id: '/commandes',
+  path: '/commandes',
   getParentRoute: () => rootRouteImport,
 } as any)
 const InscriptionRoute = InscriptionRouteImport.update({
@@ -66,40 +73,52 @@ const ApiPublicDemandesATraiterRoute =
     path: '/api/public/demandes-a-traiter',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicRappelCommandesRoute =
+  ApiPublicRappelCommandesRouteImport.update({
+    id: '/api/public/rappel-commandes',
+    path: '/api/public/rappel-commandes',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/$': typeof SplatRoute
   '/bureau': typeof BureauRoute
+  '/commandes': typeof CommandesRoute
   '/inscription': typeof InscriptionRoute
   '/journee': typeof JourneeRoute
   '/devis/$jeton': typeof DevisJetonRoute
   '/fiche/$inscriptionId': typeof FicheInscriptionIdRoute
   '/api/public/demande-resultat': typeof ApiPublicDemandeResultatRoute
   '/api/public/demandes-a-traiter': typeof ApiPublicDemandesATraiterRoute
+  '/api/public/rappel-commandes': typeof ApiPublicRappelCommandesRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/$': typeof SplatRoute
   '/bureau': typeof BureauRoute
+  '/commandes': typeof CommandesRoute
   '/inscription': typeof InscriptionRoute
   '/journee': typeof JourneeRoute
   '/devis/$jeton': typeof DevisJetonRoute
   '/fiche/$inscriptionId': typeof FicheInscriptionIdRoute
   '/api/public/demande-resultat': typeof ApiPublicDemandeResultatRoute
   '/api/public/demandes-a-traiter': typeof ApiPublicDemandesATraiterRoute
+  '/api/public/rappel-commandes': typeof ApiPublicRappelCommandesRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/$': typeof SplatRoute
   '/bureau': typeof BureauRoute
+  '/commandes': typeof CommandesRoute
   '/inscription': typeof InscriptionRoute
   '/journee': typeof JourneeRoute
   '/devis/$jeton': typeof DevisJetonRoute
   '/fiche/$inscriptionId': typeof FicheInscriptionIdRoute
   '/api/public/demande-resultat': typeof ApiPublicDemandeResultatRoute
   '/api/public/demandes-a-traiter': typeof ApiPublicDemandesATraiterRoute
+  '/api/public/rappel-commandes': typeof ApiPublicRappelCommandesRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -107,46 +126,54 @@ export interface FileRouteTypes {
     | '/'
     | '/$'
     | '/bureau'
+    | '/commandes'
     | '/inscription'
     | '/journee'
     | '/devis/$jeton'
     | '/fiche/$inscriptionId'
     | '/api/public/demande-resultat'
     | '/api/public/demandes-a-traiter'
+    | '/api/public/rappel-commandes'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/$'
     | '/bureau'
+    | '/commandes'
     | '/inscription'
     | '/journee'
     | '/devis/$jeton'
     | '/fiche/$inscriptionId'
     | '/api/public/demande-resultat'
     | '/api/public/demandes-a-traiter'
+    | '/api/public/rappel-commandes'
   id:
     | '__root__'
     | '/'
     | '/$'
     | '/bureau'
+    | '/commandes'
     | '/inscription'
     | '/journee'
     | '/devis/$jeton'
     | '/fiche/$inscriptionId'
     | '/api/public/demande-resultat'
     | '/api/public/demandes-a-traiter'
+    | '/api/public/rappel-commandes'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   SplatRoute: typeof SplatRoute
   BureauRoute: typeof BureauRoute
+  CommandesRoute: typeof CommandesRoute
   InscriptionRoute: typeof InscriptionRoute
   JourneeRoute: typeof JourneeRoute
   DevisJetonRoute: typeof DevisJetonRoute
   FicheInscriptionIdRoute: typeof FicheInscriptionIdRoute
   ApiPublicDemandeResultatRoute: typeof ApiPublicDemandeResultatRoute
   ApiPublicDemandesATraiterRoute: typeof ApiPublicDemandesATraiterRoute
+  ApiPublicRappelCommandesRoute: typeof ApiPublicRappelCommandesRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -170,6 +197,13 @@ declare module '@tanstack/react-router' {
       path: '/bureau'
       fullPath: '/bureau'
       preLoaderRoute: typeof BureauRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/commandes': {
+      id: '/commandes'
+      path: '/commandes'
+      fullPath: '/commandes'
+      preLoaderRoute: typeof CommandesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/inscription': {
@@ -214,6 +248,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicDemandesATraiterRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/rappel-commandes': {
+      id: '/api/public/rappel-commandes'
+      path: '/api/public/rappel-commandes'
+      fullPath: '/api/public/rappel-commandes'
+      preLoaderRoute: typeof ApiPublicRappelCommandesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -221,12 +262,14 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   SplatRoute: SplatRoute,
   BureauRoute: BureauRoute,
+  CommandesRoute: CommandesRoute,
   InscriptionRoute: InscriptionRoute,
   JourneeRoute: JourneeRoute,
   DevisJetonRoute: DevisJetonRoute,
   FicheInscriptionIdRoute: FicheInscriptionIdRoute,
   ApiPublicDemandeResultatRoute: ApiPublicDemandeResultatRoute,
   ApiPublicDemandesATraiterRoute: ApiPublicDemandesATraiterRoute,
+  ApiPublicRappelCommandesRoute: ApiPublicRappelCommandesRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

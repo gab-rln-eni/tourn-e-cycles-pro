@@ -81,3 +81,8 @@ export function messageErreur(e: unknown) {
     return String((e as { message: unknown }).message);
   return "Une erreur est survenue. Réessayez.";
 }
+
+/** Quantité en français (virgule décimale), lot L1. */
+export function quantiteFr(q: number) {
+  return Number(q).toLocaleString("fr-FR", { maximumFractionDigits: 2 });
+}

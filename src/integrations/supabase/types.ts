@@ -626,6 +626,10 @@ export type Database = {
       devis_reprendre: { Args: { p_devis: string }; Returns: undefined }
       devis_repondre2: { Args: { p_jeton: string; p_decision: string }; Returns: Json }
       devis_client_axonaut: { Args: { p_devis: string }; Returns: string }
+      commandes_pieces_journees: { Args: never; Returns: Json }
+      commandes_pieces_journee: { Args: { p_evenement: string }; Returns: Json }
+      commandes_pieces_marquer: { Args: { p_piece: string; p_commandee: boolean }; Returns: Json }
+      rappel_commandes_reserver: { Args: { p_essai?: boolean }; Returns: Json }
     }
     Enums: {
       app_role: "dirigeant" | "mecanicien" | "atelier"
