@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SplatRouteImport } from './routes/$'
+import { Route as AccesRouteImport } from './routes/acces'
 import { Route as BureauRouteImport } from './routes/bureau'
 import { Route as CommandesRouteImport } from './routes/commandes'
 import { Route as InscriptionRouteImport } from './routes/inscription'
@@ -30,6 +31,11 @@ const IndexRoute = IndexRouteImport.update({
 const SplatRoute = SplatRouteImport.update({
   id: '/$',
   path: '/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AccesRoute = AccesRouteImport.update({
+  id: '/acces',
+  path: '/acces',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BureauRoute = BureauRouteImport.update({
@@ -89,6 +95,7 @@ const ApiPublicRappelCommandesRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/$': typeof SplatRoute
+  '/acces': typeof AccesRoute
   '/bureau': typeof BureauRoute
   '/commandes': typeof CommandesRoute
   '/inscription': typeof InscriptionRoute
@@ -103,6 +110,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/$': typeof SplatRoute
+  '/acces': typeof AccesRoute
   '/bureau': typeof BureauRoute
   '/commandes': typeof CommandesRoute
   '/inscription': typeof InscriptionRoute
@@ -118,6 +126,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/$': typeof SplatRoute
+  '/acces': typeof AccesRoute
   '/bureau': typeof BureauRoute
   '/commandes': typeof CommandesRoute
   '/inscription': typeof InscriptionRoute
@@ -134,6 +143,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/$'
+    | '/acces'
     | '/bureau'
     | '/commandes'
     | '/inscription'
@@ -148,6 +158,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/$'
+    | '/acces'
     | '/bureau'
     | '/commandes'
     | '/inscription'
@@ -162,6 +173,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/$'
+    | '/acces'
     | '/bureau'
     | '/commandes'
     | '/inscription'
@@ -177,6 +189,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   SplatRoute: typeof SplatRoute
+  AccesRoute: typeof AccesRoute
   BureauRoute: typeof BureauRoute
   CommandesRoute: typeof CommandesRoute
   InscriptionRoute: typeof InscriptionRoute
@@ -203,6 +216,13 @@ declare module '@tanstack/react-router' {
       path: '/$'
       fullPath: '/$'
       preLoaderRoute: typeof SplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/acces': {
+      id: '/acces'
+      path: '/acces'
+      fullPath: '/acces'
+      preLoaderRoute: typeof AccesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/bureau': {
@@ -281,6 +301,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   SplatRoute: SplatRoute,
+  AccesRoute: AccesRoute,
   BureauRoute: BureauRoute,
   CommandesRoute: CommandesRoute,
   InscriptionRoute: InscriptionRoute,

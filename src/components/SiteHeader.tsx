@@ -48,20 +48,10 @@ export function SiteHeader() {
                 Bureau
               </Link>
             )}
-            {voitBureau && (
-              <Link to="/commandes" className={lien}>
-                À commander
-              </Link>
-            )}
-            {roles.includes("dirigeant") && (
-              <Link to="/statistiques" className={lien}>
-                Statistiques
-              </Link>
-            )}
             <DropdownMenu>
               <DropdownMenuTrigger
                 className="tap inline-flex items-center justify-center rounded-lg hover:bg-muted"
-                aria-label="Mon compte"
+                aria-label="Mon compte et autres écrans"
               >
                 <CircleUserRound className="size-7" aria-hidden="true" />
               </DropdownMenuTrigger>
@@ -70,6 +60,23 @@ export function SiteHeader() {
                   {data.user.email}
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                {/* Écrans des lots L1 à L3 : dans ce menu pour garder l'en-tête sur une ligne au téléphone */}
+                {voitBureau && (
+                  <DropdownMenuItem asChild className="min-h-12 text-base">
+                    <Link to="/commandes">À commander</Link>
+                  </DropdownMenuItem>
+                )}
+                {roles.includes("dirigeant") && (
+                  <DropdownMenuItem asChild className="min-h-12 text-base">
+                    <Link to="/statistiques">Statistiques</Link>
+                  </DropdownMenuItem>
+                )}
+                {roles.includes("dirigeant") && (
+                  <DropdownMenuItem asChild className="min-h-12 text-base">
+                    <Link to="/acces">Accès</Link>
+                  </DropdownMenuItem>
+                )}
+                {voitBureau && <DropdownMenuSeparator />}
                 <DropdownMenuItem onSelect={deconnexion} className="min-h-12 text-base">
                   <LogOut aria-hidden="true" /> Se déconnecter
                 </DropdownMenuItem>

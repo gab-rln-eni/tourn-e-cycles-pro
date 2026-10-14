@@ -641,6 +641,12 @@ export type Database = {
       commandes_pieces_journee: { Args: { p_evenement: string }; Returns: Json }
       commandes_pieces_marquer: { Args: { p_piece: string; p_commandee: boolean }; Returns: Json }
       rappel_commandes_reserver: { Args: { p_essai?: boolean }; Returns: Json }
+      acces_liste: { Args: never; Returns: Json }
+      acces_donner: {
+        Args: { p_email: string; p_role: Database["public"]["Enums"]["app_role"]; p_expire_le: string }
+        Returns: Json
+      }
+      acces_retirer: { Args: { p_id: string }; Returns: Json }
     }
     Enums: {
       app_role: "dirigeant" | "mecanicien" | "atelier"
